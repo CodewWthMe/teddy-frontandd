@@ -7,7 +7,7 @@
 // CHANGE THIS to your Render backend URL
 // after you deploy the backend on Render
 // ──────────────────────────────────────────
-const API_URL = 'https://curled-macrame-api.onrender.com/api';
+const API_URL = 'https://curled-macrame-api.onrender.com';
 
 // ========================================
 // DATA MANAGER CLASS
@@ -774,6 +774,17 @@ window.addEventListener('click', function (e) {
         if (modal && e.target === modal) modal.style.display = 'none';
     });
 });
+
+// ========================================
+// ALIASES — match the function names used in index.html
+// ========================================
+
+function showAdminLogin() { openAdminModal(); }
+function showCart() { openCart(); }
+function scrollToProducts() {
+    const el = document.getElementById('all-products-grid') || document.getElementById('products');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
 
 // ========================================
 // BOOT
