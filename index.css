@@ -1,0 +1,46 @@
+@import url('style.css');
+
+/* Homepage-specific overrides */
+.hero {
+    padding-top: 90px;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+
+.hero-actions button {
+    min-width: 150px;
+}
+
+@media (max-width: 880px) {
+    .hero {
+        padding-top: 60px;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .hero-actions button {
+        width: 100%;
+        min-width: auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .hero-copy h2 {
+        font-size: clamp(1.9rem, 9vw, 2.4rem);
+    }
+
+    .hero-copy p {
+        font-size: 0.98rem;
+    }
+
+    .hero-image {
+        min-height: 280px;
+    }
+}

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description"
+        content="Curled Macrame - Handmade boho decor, premium wall hangings, and cozy plant hangers">
+    <meta name="keywords" content="macrame, boho decor, wall hangings, handmade">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Curled Macrame">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#8b7355">
+    <meta name="msapplication-TileColor" content="#8b7355">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="x-ua-compatible" content="IE=edge">
+    <title>Curled Macrame</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <div class="brand">
+                <img src="logo.png" alt="Curled Macrame Logo" class="logo-img"
+                    onclick="window.location.href = window.location.pathname + '#home';">
+                <div>
+                    <p class="eyebrow">Handmade Boho Decor</p>
+                    <h1>Curled Macrame</h1>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <a href="#home">Home</a>
+                <a href="products.html">Shop</a>
+                <a href="#about">About</a>
+                <a href="#" onclick="showCart(); return false;">Cart <span id="cart-count" class="cart-badge">0</span></a>
+                <a href="#contact">Contact</a>
+                <button id="admin-btn" class="admin-btn" onclick="showAdminLogin()">Admin</button>
+            </nav>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section id="home" class="hero section-fade">
+            <div class="container hero-grid">
+                <div class="hero-copy">
+                    <span class="eyebrow">Threads & Knots to perfect gifting solutions.</span>
+                    <h2>Bring handmade textures for your cozy aesthetic.</h2>
+                    <p>Explore crochet flower bouquets , pots , keychains, hair accessories, macrame wall hangings, plant hangers, cozy room decors and many more.</p>
+                    <div class="hero-actions">
+                        <button onclick="scrollToProducts()">Shop Now</button>
+                        <button class="secondary" onclick="showCart()">View Cart 🛒 <span id="cart-count"
+                                class="cart-badge">0</span></button>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="front.jpg" alt="Curled Macrame Products">
+                    <p>Curled Macrame Decoration</p>
+                    <!-- <img src="decoration.jpg" alt="Curled Macrame Decoration"> -->
+                </div>
+            </div>
+        </section>
+
+        <section id="products" class="section section-fade">
+            <div class="container">
+                <div class="section-heading">
+                    <span class="eyebrow">Featured Collection</span>
+                    <h2>Best sellers you will love</h2>
+                </div>
+                <div class="product-grid" id="featured-products-grid">
+                    <!-- Featured product cards will render here -->
+                </div>
+                <div class="view-more-container">
+                    <a href="products.html" target="_blank" class="view-more-btn">View All Products →</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="section section-fade alternate">
+            <div class="container about-grid">
+                <div>
+                    <span class="eyebrow">Small batch, big heart</span>
+                    <h2>Crafted for cozy homes.</h2>
+                    <p>Each piece is handmade in small batches using natural cotton, sturdy rings, and timeless weaving
+                        techniques. Our products are designed to feel soft, durable, and effortlessly beautiful.</p>
+                </div>
+                <div class="benefits">
+                    <div class="benefit-item">
+                        <span>✨</span>
+                        <p>Handmade quality</p>
+                    </div>
+                    <div class="benefit-item">
+                        <span>🌿</span>
+                        <p>Natural fibers</p>
+                    </div>
+                    <div class="benefit-item">
+                        <span>🚚</span>
+                        <p>Cash on delivery available</p>
+                    </div>
+                    <div class="benefit-item">
+                        <span>📱</span>
+                        <p>QR payment supported</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="section section-fade alternate">
+            <div class="container contact-card">
+                <h2>Stay in touch</h2>
+                <p>Follow our latest drops and share your decor ideas.</p>
+                <div class="contact-links">
+                    <a href="https://wa.me/+917415036637" target="_blank" class="contact-link-btn whatsapp-btn" title="WhatsApp">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5 -.67 -.51 -.173 -.008 -.371 -.01 -.57 -.01 -.198 0 -.52 .074 -.792 .372 -.272 .297 -1.04 1.0１６ -１．０４ ２．４７９ ０ １．４６２ １．０６５ ２．８７５ １．２１３ ３．０７４ .１４９ .１９８ ２．０９６ ３．２ ５．０７６ ４．４８７ .７０９ .３０６ １．２６２ .４８９ １．６９４ .６２５ .７１２ .２２７ １．３６ .１９５ １．８７１ .１１８ .５７１ -.０８５ １．７５８ -.７１９ ２．００６ -₁．４₁₃ .₂₄₈ -₀．₆₉₄ .₂₄₈ -₁．₂₈₉ .₁₇₃ -₁．₄₁₃ -₀．₀₇₄ -₀．₁₂₄ -₀．₂₇₂ -₀．₁₉₈ -₀．伍柒 -₀．叁肆柒m -伍．肆₂₁ -柒．肆₀³h -․₀₀⁴a 玖．捌⁷ 玖．捌⁷ ₀ ₀⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹¹²²²²²²²²²²²²²²²²²²²²²²²²²²²³³³³³³³³³³³³³³³³³³³³³³³³³³´´´´´´´´´´´´´´´´´´´´´´´´´µµµµµµµµµµµµµµµµµµµ¶¶¶¶¶¶¶¶¶¶¶¶¶¶¶¶¶¶¶············¸¸¸¸¸¸¸¸¸¸¸¸¸¸¸¸¸¸¸ºººººººººººººººººº»»»»»»»»»»»»»»»¼¼¼¼¼¼¼¼¼¼¼¼¼¼¼½½½½½½½½½½½½½½¾¾¾¾¾¾¾¾¾¾¿¿¿¿¿¿¿¿¿ÀÀÀÀÀÀÀÀÁÁÁÁÁÁÁÁÂÂÂÂÂÂÂÃÃÃÃÃÃÃÄÄÄÄÄÄÄÄÅÅÅÅÅÅÅÆÆÆÆÆÆÇÇÇÇÇÇÈÈÈÈÈÉÉÉÉÉÊÊÊÊËËËËÌÌÌÌÍÍÍÍÎÎÎÎÏÏÏÏÐÐÐÐÑÑÑÑÒÒÒÒÓÓÓÓÔÔÔÔÕÕÕÕÖÖÖÖ××××ØØØØÙÙÙÙÚÚÚÚÛÛÛÛÜÜÜÜÝÝÝÝÞÞÞÞßßßßààààááááââââããããääääååååææææççççèèèèééééêêêêëëëëììììííííîîîîïïïïððððññññòòòòóóóóôôôôõõõõöööö÷÷÷÷øøøøùùùùúúúúûûûûüüüüýýýýþþþþÿÿÿÿ" />
+                        </svg>
+                        <span>WhatsApp</span>
+                    </a>
+                    <a href="https://www.instagram.com/curled_macrame/" target="_blank" class="contact-link-btn instagram-btn" title="Instagram">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163C8.756 0 8.331.012 7.052.07 3.656.272 1.273 2.69 1.073 6.052.012 7.331 0 7.756 0 12c0 4.244.011 4.669.072 5.948.2 3.361 2.583 5.779 5.945 5.98 1.279.058 1.704.07 5.948.07s4.669-.011 5.948-.072c3.361-.2 5.779-2.583 5.98-5.945.058-1.279.072-1.704.072-5.948 0-4.244-.011-4.669-.072-5.948-.2-3.361-2.583-5.779-5.945-5.98C16.669.012 16.244 0 12 0z"/>
+                            <path d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zm0 10.162a4 4 0 110-8 4 4 0 010 8z"/>
+                            <circle cx="18.406" cy="5.594" r="1.44"/>
+                        </svg>
+                        <span>Instagram</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="policies" class="section section-fade">
+            <div class="container terms-grid">
+                <article class="terms-card">
+                    <span class="eyebrow">Legal</span>
+                    <h2>Terms & Conditions</h2>
+                    <p>Update this text anytime by editing the HTML. Your terms should describe order rules, returns, delivery, and how customers may use the website.</p>
+                    <p>Example placeholder: All purchases are subject to availability. We reserve the right to cancel orders due to stock shortages or pricing errors.</p>
+                </article>
+                <article class="terms-card">
+                    <span class="eyebrow">Privacy</span>
+                    <h2>Privacy Policy</h2>
+                    <p>Update this policy later by editing the content here. Use it to explain how customer data is collected, stored, and protected.</p>
+                    <p>Example placeholder: We collect contact and order information only to process purchases, communicate order updates, and deliver products safely.</p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <p>&copy; 2026 Curled Macrame. Designed with care.</p>
+            <div class="footer-links">
+                <a href="#policies">Terms & Policy</a>
+                <a href="#policies">Privacy Policy</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAdminModal()">&times;</span>
+            <div id="admin-login">
+                <h2>🔐 Admin Login</h2>
+                <p style="color: #666; margin-bottom: 20px;">Enter your password to access admin panel</p>
+                <input type="password" id="admin-password" placeholder="Enter admin password">
+                <button onclick="adminLogin()">Login</button>
+            </div>
+            <div id="admin-panel" style="display: none;">
+                <h2 style="margin-bottom: 20px; color: var(--accent);">📊 Dashboard</h2>
+                <div class="admin-tabs">
+                    <button class="tab-btn active" data-tab="products" onclick="showTab('products', event)">🛍️ Products</button>
+                    <button class="tab-btn" data-tab="types" onclick="showTab('types', event)">🏷️ Product Types</button>
+                    <button class="tab-btn" data-tab="orders" onclick="showTab('orders', event)">📦 Orders</button>
+                    <button class="tab-btn" data-tab="settings" onclick="showTab('settings', event)">⚙️ Settings</button>
+                </div>
+
+                <div id="products-tab" class="admin-tab-content">
+                    <h3 style="margin-bottom: 15px;">Manage Products</h3>
+                    <button onclick="showAddProductForm()" class="add-product-btn">+ Add New Product</button>
+                    <div id="products-list"></div>
+                </div>
+
+                <div id="types-tab" class="admin-tab-content" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">Manage Product Types</h3>
+                    <button onclick="showAddTypeForm()" class="add-product-btn">+ Add New Type</button>
+                    <div id="types-list"></div>
+                </div>
+
+                <div id="orders-tab" class="admin-tab-content" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">📋 Recent Orders</h3>
+                    <div id="orders-list"></div>
+                </div>
+
+                <div id="settings-tab" class="admin-tab-content" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">Business Settings</h3>
+                    <div class="settings-form">
+                        <label> Business Email:</label>
+                        <input type="email" id="business-email" placeholder="curledm@gmail.com" required>
+                        <label>📱 Business WhatsApp Number:</label>
+                        <input type="text" id="business-whatsapp" placeholder="+917415036637" required>
+                        <button onclick="saveSettings()" style="background: var(--accent); color: white;">💾 Save
+                            Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCart()">&times;</span>
+            <h2 style="margin-bottom: 20px; color: var(--accent);">🛒 Shopping Cart</h2>
+            <div id="cart-items" class="cart-items-container"></div>
+            <div class="cart-summary">
+                <div class="cart-total-row">
+                    <span>Total Amount:</span>
+                    <span class="cart-total" id="cart-total">Rs 0.00</span>
+                </div>
+                <button class="checkout-btn" onclick="checkoutCart()">Proceed to Checkout</button>
+                <button class="clear-cart-btn" onclick="dataManager.clearCart(); loadCartItems(); updateOrderPageSection();">Clear Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Summary Modal -->
+    <div id="order-summary-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeOrderSummary()">&times;</span>
+            <h2 style="margin-bottom: 20px; color: var(--accent);">🧾 Order Summary</h2>
+            <div id="order-summary-items" class="checkout-summary-list"></div>
+            <div class="cart-total-row" style="margin-top: 16px;">
+                <span>Total</span>
+                <strong id="order-summary-total">Rs 0.00</strong>
+            </div>
+            <div class="checkout-form">
+                <label for="checkout-name">Full name</label>
+                <input id="checkout-name" type="text" placeholder="Enter your full name">
+                <label for="checkout-phone">Phone number</label>
+                <input id="checkout-phone" type="tel" placeholder="Enter your phone number">
+                <label for="checkout-email">Email address</label>
+                <input id="checkout-email" type="email" placeholder="Enter your email address">
+                <label for="checkout-address">Delivery address</label>
+                <textarea id="checkout-address" rows="4" placeholder="Enter delivery address"></textarea>
+                <div class="checkout-payment-options">
+                    <label><input type="radio" name="checkout-payment" value="Cash on Delivery" checked> Cash on Delivery</label>
+                    <label><input type="radio" name="checkout-payment" value="Online Payment (QR Code)"> Online Payment</label>
+                </div>
+            </div>
+            <div class="summary-actions">
+                <button class="checkout-btn" onclick="confirmOrderSummary()">Confirm Order</button>
+                <button class="clear-cart-btn" onclick="closeOrderSummary()">Back to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProductModal()">&times;</span>
+            <h2 id="product-modal-title">Add New Product</h2>
+            <form id="product-form">
+                <input type="text" id="product-name" placeholder="Product Name" required>
+                <input type="text" id="product-description" placeholder="Description" required>
+                <input type="number" id="product-price" placeholder="Price" step="0.01" required>
+                <input type="number" id="product-discount" placeholder="Discount %" min="0" max="100">
+                <label class="file-label">Upload product photos (any image format, max 10MB each)</label>
+                <input type="file" id="product-images" multiple capture="environment" onchange="handleProductImageFiles(event)">
+                <label class="file-label">Upload product video (max 30 sec)</label>
+                <input type="file" id="product-video" accept="video/*" capture="environment" onchange="handleProductVideoFile(event)">
+                <div id="product-media-preview" class="product-media-preview"></div>
+                <button type="button" class="clear-media-btn" onclick="resetProductMediaPreview()">Clear media</button>
+                <input type="text" id="product-image" placeholder="Image URL (optional)">
+                <select id="product-type" required>
+                    <option value="">Select Product Type</option>
+                </select>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="product-featured">
+                    <span>Mark as Featured Product</span>
+                </label>
+                <button type="submit">Save Product</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="backend.js"></script>
+</body>
+
+</html>

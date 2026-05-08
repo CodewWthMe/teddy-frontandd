@@ -1,0 +1,7 @@
+# Netlify configuration for the frontend
+# Place this file in the same folder as index.html
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

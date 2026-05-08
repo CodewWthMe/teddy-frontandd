@@ -1,0 +1,10 @@
+@import url('style.css');
+
+/* Products page-specific overrides */
+.products-display {
+    width: 100%;
+}
+
+.product-filters {
+    min-width: 250px;
+}
