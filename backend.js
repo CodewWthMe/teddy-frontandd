@@ -7,7 +7,7 @@
 // CHANGE THIS to your Render backend URL
 // after you deploy the backend on Render
 // ──────────────────────────────────────────
-const API_URL = 'https://curled-macrame-api.onrender.com';
+const API_URL = 'https://curled-macrame-api.onrender.com/api';
 
 // ========================================
 // DATA MANAGER CLASS
