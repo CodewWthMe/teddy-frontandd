@@ -417,7 +417,11 @@ async function adminLogin() {
 
         showAdminPanel();
     } catch (err) {
-        alert('❌ Wrong Password');
+        if (err.message === 'Wrong password') {
+            alert('❌ Wrong Password');
+        } else {
+            alert('❌ Could not connect to server.\n\nError: ' + err.message + '\n\nCheck that:\n1. Your Render backend is running\n2. The API_URL in backend.js is correct');
+        }
     }
 }
 
