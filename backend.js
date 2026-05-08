@@ -791,10 +791,42 @@ function scrollToProducts() {
 }
 
 // ========================================
+// MOBILE MENU
+// ========================================
+
+function initMobileMenu() {
+    const toggle = document.querySelector('.mobile-menu-toggle');
+    const nav = document.querySelector('.main-nav');
+    if (!toggle || !nav) return;
+
+    toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggle.classList.toggle('active');
+        nav.classList.toggle('active');
+    });
+
+    nav.querySelectorAll('a, button').forEach(function (el) {
+        el.addEventListener('click', function () {
+            toggle.classList.remove('active');
+            nav.classList.remove('active');
+        });
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!toggle.contains(e.target) && !nav.contains(e.target)) {
+            toggle.classList.remove('active');
+            nav.classList.remove('active');
+        }
+    });
+}
+
+// ========================================
 // BOOT
 // ========================================
 
 document.addEventListener('DOMContentLoaded', function () {
+    initMobileMenu();
+
     dataManager.ready.then(() => {
         dataManager.updateProductDisplay();
         updateCartCount();
