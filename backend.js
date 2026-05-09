@@ -242,18 +242,29 @@ class DataManager {
         const grid = document.getElementById('all-products-grid');
         if (!grid) return;
 
+        // Inject search bar above grid (once)
+        if (!document.getElementById('product-search-wrap')) {
+            const wrap = document.createElement('div');
+            wrap.id = 'product-search-wrap';
+            wrap.className = 'product-search-wrap';
+            wrap.innerHTML = `<input type="search" id="product-search" class="product-search-input"
+                placeholder="Search products..." oninput="searchProducts(this.value)" autocomplete="off">`;
+            grid.parentElement.insertBefore(wrap, grid);
+        }
+
         // Populate type filter chips
         const filterContainer = document.getElementById('product-types-filter');
         if (filterContainer) {
             const types = [...new Set(this.products.map(p => p.type).filter(Boolean))];
             filterContainer.innerHTML =
-                `<button class="filter-btn active" data-type="all" onclick="filterProductsByType('all',event)">All Products</button>` +
+                `<button class="filter-btn active" data-type="all" onclick="filterProductsByType('all',event)">All</button>` +
                 types.map(t =>
                     `<button class="filter-btn" data-type="${t}" onclick="filterProductsByType('${t}',event)">${t}</button>`
                 ).join('');
             activeFilter = 'all';
         }
 
+        activeSearch = '';
         renderProducts(this.products, grid);
     }
 }
@@ -264,15 +275,27 @@ class DataManager {
 
 const dataManager = new DataManager();
 let activeFilter = 'all';
+let activeSearch = '';
+let lightboxProduct = null;
+let lightboxImgIndex = 0;
 
 // ========================================
 // PRODUCT RENDERING
 // ========================================
 
 function renderProducts(products, grid) {
-    const filtered = activeFilter === 'all'
+    let filtered = activeFilter === 'all'
         ? products
         : products.filter(p => p.type === activeFilter);
+
+    if (activeSearch) {
+        const q = activeSearch.toLowerCase();
+        filtered = filtered.filter(p =>
+            (p.name || '').toLowerCase().includes(q) ||
+            (p.description || '').toLowerCase().includes(q) ||
+            (p.type || '').toLowerCase().includes(q)
+        );
+    }
 
     if (filtered.length === 0) {
         grid.innerHTML = '<p class="no-products">No products found.</p>';
@@ -284,14 +307,18 @@ function renderProducts(products, grid) {
         const finalPrice = discount > 0
             ? Math.round(product.price - (product.price * discount / 100))
             : product.price;
-
-        const imgSrc = (product.images && product.images[0]) ? product.images[0] : 'https://placehold.co/400x300?text=No+Image';
+        const imgSrc = (product.images && product.images[0])
+            ? product.images[0]
+            : 'https://placehold.co/400x300?text=No+Image';
+        const imgCount = (product.images || []).length;
 
         return `
-        <div class="product-card">
+        <div class="product-card" onclick="openProductLightbox(${product.id})">
             <div class="product-img-wrap">
-                <img src="${imgSrc}" alt="${product.name}" loading="lazy">
+                <img src="${imgSrc}" alt="${product.name}">
                 ${discount > 0 ? `<div class="discount-badge">${discount}% OFF</div>` : ''}
+                ${imgCount > 1 ? `<div class="img-count-badge">&#128247; ${imgCount}</div>` : ''}
+                <div class="card-tap-hint">Tap to view</div>
             </div>
             <div class="product-card-body">
                 <h3>${product.name}</h3>
@@ -300,10 +327,7 @@ function renderProducts(products, grid) {
                     ${discount > 0 ? `<span class="old-price">₹${product.price}</span>` : ''}
                     <span class="new-price">₹${finalPrice}</span>
                 </div>
-                <div class="product-card-footer">
-                    <input type="number" id="qty-${product.id}" value="1" min="1" class="qty-input">
-                    <button class="add-cart-btn" onclick="addProductToCart(${product.id})">Add to Cart 🛒</button>
-                </div>
+                <button class="add-cart-btn" onclick="event.stopPropagation(); quickAddToCart(${product.id}, this)">Add to Cart 🛒</button>
             </div>
         </div>`;
     }).join('');
@@ -313,9 +337,133 @@ function filterProductsByType(type, event) {
     activeFilter = type;
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
     if (event && event.target) event.target.classList.add('active');
-
     const grid = document.getElementById('all-products-grid');
     if (grid) renderProducts(dataManager.getProducts(), grid);
+}
+
+function searchProducts(query) {
+    activeSearch = query.trim();
+    const grid = document.getElementById('all-products-grid');
+    if (grid) renderProducts(dataManager.getProducts(), grid);
+}
+
+// ========================================
+// PRODUCT LIGHTBOX
+// ========================================
+
+function openProductLightbox(productId) {
+    lightboxProduct = dataManager.getProducts().find(p => p.id === productId);
+    if (!lightboxProduct) return;
+    lightboxImgIndex = 0;
+
+    let lb = document.getElementById('product-lightbox');
+    if (!lb) {
+        lb = document.createElement('div');
+        lb.id = 'product-lightbox';
+        document.body.appendChild(lb);
+    }
+
+    const discount = parseInt(lightboxProduct.discount) || 0;
+    const finalPrice = discount > 0
+        ? Math.round(lightboxProduct.price - (lightboxProduct.price * discount / 100))
+        : lightboxProduct.price;
+    const images = lightboxProduct.images || [];
+
+    lb.innerHTML = `
+    <div class="lb-backdrop" onclick="closeLightbox()"></div>
+    <div class="lb-box">
+        <button class="lb-close" onclick="closeLightbox()">&#10005;</button>
+        <div class="lb-img-area" id="lb-img-area">
+            <img id="lb-main-img" src="${images[0] || ''}" alt="${lightboxProduct.name}">
+            ${images.length > 1 ? `
+            <button class="lb-nav lb-prev" onclick="lightboxNav(-1)">&#8249;</button>
+            <button class="lb-nav lb-next" onclick="lightboxNav(1)">&#8250;</button>
+            <div class="lb-dots" id="lb-dots">
+                ${images.map((_, i) => `<span class="lb-dot${i === 0 ? ' active' : ''}" onclick="lightboxGoTo(${i})"></span>`).join('')}
+            </div>` : ''}
+        </div>
+        <div class="lb-info">
+            ${discount > 0 ? `<div class="lb-badge">${discount}% OFF</div>` : ''}
+            <h2 class="lb-name">${lightboxProduct.name}</h2>
+            <p class="lb-desc">${lightboxProduct.description || ''}</p>
+            <div class="lb-price-row">
+                ${discount > 0 ? `<span class="lb-old">₹${lightboxProduct.price}</span>` : ''}
+                <span class="lb-new">₹${finalPrice}</span>
+                ${discount > 0 ? `<span class="lb-save">Save ₹${lightboxProduct.price - finalPrice}</span>` : ''}
+            </div>
+            <div class="lb-actions">
+                <input type="number" id="lb-qty" value="1" min="1" class="qty-input lb-qty">
+                <button class="add-cart-btn lb-cart-btn" onclick="addFromLightbox()">Add to Cart 🛒</button>
+            </div>
+        </div>
+    </div>`;
+
+    lb.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Touch swipe
+    const imgArea = lb.querySelector('#lb-img-area');
+    let startX = 0;
+    imgArea.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    imgArea.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 48) lightboxNav(dx < 0 ? 1 : -1);
+    }, { passive: true });
+}
+
+function closeLightbox() {
+    const lb = document.getElementById('product-lightbox');
+    if (lb) lb.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function lightboxNav(dir) {
+    if (!lightboxProduct) return;
+    const imgs = lightboxProduct.images || [];
+    if (imgs.length <= 1) return;
+    lightboxGoTo((lightboxImgIndex + dir + imgs.length) % imgs.length);
+}
+
+function lightboxGoTo(idx) {
+    lightboxImgIndex = idx;
+    const img = document.getElementById('lb-main-img');
+    if (img && lightboxProduct.images[idx]) {
+        img.style.opacity = '0';
+        img.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            img.src = lightboxProduct.images[idx];
+            img.style.opacity = '1';
+            img.style.transform = 'scale(1)';
+        }, 160);
+    }
+    document.querySelectorAll('.lb-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+}
+
+function addFromLightbox() {
+    if (!lightboxProduct) return;
+    const qty = parseInt(document.getElementById('lb-qty')?.value) || 1;
+    dataManager.addToCart(lightboxProduct, qty);
+    updateCartCount();
+    loadCartItems();
+    const btn = document.querySelector('.lb-cart-btn');
+    if (btn) {
+        btn.textContent = '✅ Added!';
+        btn.style.background = '#4caf50';
+        setTimeout(() => { btn.textContent = 'Add to Cart 🛒'; btn.style.background = ''; }, 1800);
+    }
+}
+
+function quickAddToCart(productId, btn) {
+    const product = dataManager.getProducts().find(p => p.id === productId);
+    if (!product) return;
+    dataManager.addToCart(product, 1);
+    updateCartCount();
+    loadCartItems();
+    if (btn) {
+        btn.textContent = '✅ Added!';
+        btn.style.background = '#4caf50';
+        setTimeout(() => { btn.textContent = 'Add to Cart 🛒'; btn.style.background = ''; }, 1600);
+    }
 }
 
 // ========================================
@@ -630,22 +778,44 @@ let _pendingVideo = null;
 
 function handleProductImageFiles(event) {
     const files = Array.from(event.target.files);
+    if (!files.length) return;
     const preview = document.getElementById('product-media-preview');
-    _pendingImages = [];
 
     files.forEach(file => {
         const reader = new FileReader();
         reader.onload = function (e) {
-            _pendingImages.push(e.target.result);
+            const imgData = e.target.result;
+            const slot = _pendingImages.length;
+            _pendingImages.push(imgData);
+
             if (preview) {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:8px;margin:4px;';
-                preview.appendChild(img);
+                const wrap = document.createElement('div');
+                wrap.className = 'img-preview-wrap';
+                wrap.dataset.slot = slot;
+                wrap.innerHTML = `
+                    <img src="${imgData}" alt="preview">
+                    <button type="button" class="img-remove-btn" onclick="removePendingImage(this.parentElement)">&#10005;</button>
+                    <span class="img-preview-num">${slot + 1}</span>`;
+                preview.appendChild(wrap);
+                updateImageCount();
             }
         };
         reader.readAsDataURL(file);
     });
+    event.target.value = '';
+}
+
+function removePendingImage(wrap) {
+    const slot = parseInt(wrap.dataset.slot);
+    _pendingImages[slot] = null;
+    wrap.remove();
+    updateImageCount();
+}
+
+function updateImageCount() {
+    const count = _pendingImages.filter(Boolean).length;
+    const label = document.getElementById('img-upload-count');
+    if (label) label.textContent = count > 0 ? count + ' photo' + (count > 1 ? 's' : '') + ' selected' : '';
 }
 
 function handleProductVideoFile(event) {
@@ -684,7 +854,9 @@ function initializeProductForm() {
         const type = document.getElementById('product-type').value;
         const featured = document.getElementById('product-featured')?.checked ?? true;
 
-        let images = _pendingImages.length > 0 ? _pendingImages : (imageUrl ? [imageUrl] : []);
+        let images = _pendingImages.filter(Boolean).length > 0
+            ? _pendingImages.filter(Boolean)
+            : (imageUrl ? [imageUrl] : []);
         if (images.length === 0) {
             alert('Please add at least one image');
             return;
