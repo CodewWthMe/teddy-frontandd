@@ -241,6 +241,19 @@ class DataManager {
     updateProductDisplay() {
         const grid = document.getElementById('all-products-grid');
         if (!grid) return;
+
+        // Populate type filter chips
+        const filterContainer = document.getElementById('product-types-filter');
+        if (filterContainer) {
+            const types = [...new Set(this.products.map(p => p.type).filter(Boolean))];
+            filterContainer.innerHTML =
+                `<button class="filter-btn active" data-type="all" onclick="filterProductsByType('all',event)">All Products</button>` +
+                types.map(t =>
+                    `<button class="filter-btn" data-type="${t}" onclick="filterProductsByType('${t}',event)">${t}</button>`
+                ).join('');
+            activeFilter = 'all';
+        }
+
         renderProducts(this.products, grid);
     }
 }
@@ -250,35 +263,59 @@ class DataManager {
 // ========================================
 
 const dataManager = new DataManager();
+let activeFilter = 'all';
 
 // ========================================
 // PRODUCT RENDERING
 // ========================================
 
 function renderProducts(products, grid) {
-    if (products.length === 0) {
-        grid.innerHTML = '<h2>No Products Found</h2>';
+    const filtered = activeFilter === 'all'
+        ? products
+        : products.filter(p => p.type === activeFilter);
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<p class="no-products">No products found.</p>';
         return;
     }
 
-    grid.innerHTML = products.map(product => {
-        const finalPrice = product.discount > 0
-            ? product.price - (product.price * product.discount / 100)
+    grid.innerHTML = filtered.map(product => {
+        const discount = parseInt(product.discount) || 0;
+        const finalPrice = discount > 0
+            ? Math.round(product.price - (product.price * discount / 100))
             : product.price;
+
+        const imgSrc = (product.images && product.images[0]) ? product.images[0] : 'https://placehold.co/400x300?text=No+Image';
 
         return `
         <div class="product-card">
-            <img src="${product.images[0]}" alt="${product.name}">
-            <h3>${product.name}</h3>
-            <p>${product.description}</p>
-            <div class="price-box">
-                ${product.discount > 0 ? `<span class="old-price">₹${product.price}</span>` : ''}
-                <span class="new-price">₹${finalPrice}</span>
+            <div class="product-img-wrap">
+                <img src="${imgSrc}" alt="${product.name}" loading="lazy">
+                ${discount > 0 ? `<div class="discount-badge">${discount}% OFF</div>` : ''}
             </div>
-            <input type="number" id="qty-${product.id}" value="1" min="1">
-            <button onclick="addProductToCart(${product.id})">Add To Cart 🛒</button>
+            <div class="product-card-body">
+                <h3>${product.name}</h3>
+                <p>${product.description || ''}</p>
+                <div class="price-box">
+                    ${discount > 0 ? `<span class="old-price">₹${product.price}</span>` : ''}
+                    <span class="new-price">₹${finalPrice}</span>
+                </div>
+                <div class="product-card-footer">
+                    <input type="number" id="qty-${product.id}" value="1" min="1" class="qty-input">
+                    <button class="add-cart-btn" onclick="addProductToCart(${product.id})">Add to Cart 🛒</button>
+                </div>
+            </div>
         </div>`;
     }).join('');
+}
+
+function filterProductsByType(type, event) {
+    activeFilter = type;
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    if (event && event.target) event.target.classList.add('active');
+
+    const grid = document.getElementById('all-products-grid');
+    if (grid) renderProducts(dataManager.getProducts(), grid);
 }
 
 // ========================================
@@ -342,37 +379,49 @@ function removeCartItem(id) {
 // ORDER SYSTEM
 // ========================================
 
+function generateOrderRef() {
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const rand = String(Math.floor(Math.random() * 900) + 100);
+    return 'CM-' + yy + mm + dd + '-' + rand;
+}
+
 async function placeOrder() {
-    const name = document.getElementById('checkout-name')?.value || document.getElementById('name')?.value;
-    const phone = document.getElementById('checkout-phone')?.value || document.getElementById('phone')?.value;
-    const email = document.getElementById('checkout-email')?.value || document.getElementById('email')?.value;
-    const address = document.getElementById('checkout-address')?.value || document.getElementById('address')?.value;
+    const name    = (document.getElementById('checkout-name')?.value    || document.getElementById('name')?.value    || '').trim();
+    const phone   = (document.getElementById('checkout-phone')?.value   || document.getElementById('phone')?.value   || '').trim();
+    const email   = (document.getElementById('checkout-email')?.value   || document.getElementById('email')?.value   || '').trim();
+    const address = (document.getElementById('checkout-address')?.value || document.getElementById('address')?.value || '').trim();
+    const paymentEl = document.querySelector('input[name="checkout-payment"]:checked');
+    const payment = paymentEl ? paymentEl.value : 'Cash on Delivery';
     const cart = dataManager.getCart();
 
-    if (!name || !phone || !email || !address) {
-        alert('Please fill all details');
+    if (!name || !phone || !address) {
+        alert('Please fill in your name, phone, and address');
         return;
     }
     if (cart.length === 0) {
-        alert('Cart is empty');
+        alert('Your cart is empty');
         return;
     }
 
     const order = {
-        name, phone, email, address,
+        ref: generateOrderRef(),
+        name, phone, email, address, payment,
         cart,
         total: dataManager.getCartTotal()
     };
 
     try {
         const savedOrder = await dataManager.saveOrder(order);
+        closeOrderSummary();
+        showOrderConfirmation(savedOrder);
         sendWhatsAppOrder(savedOrder);
         dataManager.clearCart();
         loadCartItems();
         updateCartCount();
         if (typeof updateOrderPageSection === 'function') updateOrderPageSection();
-        if (typeof closeOrderSummary === 'function') closeOrderSummary();
-        alert('✅ Order Placed Successfully!');
     } catch (err) {
         alert('Failed to place order: ' + err.message);
     }
@@ -382,14 +431,99 @@ async function confirmOrderSummary() {
     await placeOrder();
 }
 
+function showOrderConfirmation(order) {
+    const existing = document.getElementById('order-confirm-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'order-confirm-toast';
+    toast.innerHTML = `
+        <div style="
+            position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+            background:#fff;border-radius:24px;padding:32px 28px;
+            box-shadow:0 24px 60px rgba(45,33,23,0.22);z-index:9999;
+            max-width:340px;width:90%;text-align:center;
+            animation:toastIn 0.35s cubic-bezier(.34,1.56,.64,1) both;
+        ">
+            <div style="font-size:2.8rem;margin-bottom:8px;">🎉</div>
+            <h3 style="color:#2f241b;margin-bottom:6px;font-size:1.25rem;">Order Placed!</h3>
+            <p style="color:#8b7355;font-size:0.9rem;margin-bottom:4px;">
+                Ref: <strong>${order.ref}</strong>
+            </p>
+            <p style="color:#5a5047;font-size:0.88rem;margin-bottom:18px;line-height:1.5;">
+                Thank you, ${order.name}! We will contact you on <strong>${order.phone}</strong> to confirm your order.
+            </p>
+            <p style="color:#aaa;font-size:0.8rem;margin-bottom:18px;">
+                WhatsApp is opening to notify us about your order.
+            </p>
+            <button onclick="document.getElementById('order-confirm-toast').remove()"
+                style="background:#8b7355;color:#fff;border:none;border-radius:999px;
+                padding:12px 28px;font-weight:700;cursor:pointer;font-size:0.95rem;">
+                OK, Done!
+            </button>
+        </div>`;
+
+    const style = document.createElement('style');
+    style.textContent = '@keyframes toastIn{from{opacity:0;transform:translate(-50%,-50%) scale(0.8)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}';
+    document.head.appendChild(style);
+    document.body.appendChild(toast);
+}
+
 function sendWhatsAppOrder(order) {
     const settings = dataManager.getSettings();
-    if (!settings) return;
+    if (!settings || !settings.businessWhatsApp) return;
 
     const number = settings.businessWhatsApp.replace(/[^0-9]/g, '');
-    const items = order.cart.map(item => item.name + ' x ' + item.quantity).join('\n');
-    const message = `New Order 🛒\n\nCustomer: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nAddress: ${order.address}\n\nItems:\n${items}\n\nTotal: ₹${order.total}`;
-    window.open('https://wa.me/' + number + '?text=' + encodeURIComponent(message), '_blank');
+
+    // Build item lines with price breakdown
+    let totalSavings = 0;
+    const itemLines = order.cart.map(item => {
+        const discount = parseInt(item.discount) || 0;
+        const unitPrice = discount > 0
+            ? Math.round(item.price - (item.price * discount / 100))
+            : item.price;
+        const subtotal = unitPrice * item.quantity;
+        if (discount > 0) totalSavings += (item.price - unitPrice) * item.quantity;
+
+        let line = `  • ${item.name}`;
+        if (item.quantity > 1) line += ` x${item.quantity}`;
+        if (discount > 0) line += `\n    ~~₹${item.price}~~ → ₹${unitPrice} (${discount}% off)`;
+        else line += ` — ₹${unitPrice}`;
+        if (item.quantity > 1) line += `\n    Subtotal: ₹${subtotal}`;
+        return line;
+    }).join('\n');
+
+    const now = new Date();
+    const dateStr = now.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true
+    });
+
+    const paymentIcon = order.payment && order.payment.includes('Online') ? '💳' : '💵';
+
+    const message =
+`🛍️ *NEW ORDER — ${order.ref}*
+━━━━━━━━━━━━━━━━━
+📅 ${dateStr}
+
+👤 *Customer Details*
+Name: ${order.name}
+📱 Phone: ${order.phone}${order.email ? '\n✉️ Email: ' + order.email : ''}
+📍 Address: ${order.address}
+
+🛒 *Items Ordered*
+${itemLines}
+
+━━━━━━━━━━━━━━━━━
+${totalSavings > 0 ? `💰 You saved: ₹${totalSavings}\n` : ''}💰 *Total: ₹${order.total}*
+${paymentIcon} Payment: ${order.payment || 'Cash on Delivery'}
+━━━━━━━━━━━━━━━━━
+Please confirm & arrange delivery. 🙏`;
+
+    setTimeout(() => {
+        window.open('https://wa.me/' + number + '?text=' + encodeURIComponent(message), '_blank');
+    }, 600);
 }
 
 // ========================================
