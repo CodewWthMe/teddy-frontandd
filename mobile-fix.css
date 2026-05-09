@@ -1,90 +1,73 @@
 /* ============================================
-   mobile-fix.css — Add to index.html <head>:
+   mobile-fix.css — Add to BOTH index.html and
+   products.html <head>:
    <link rel="stylesheet" href="mobile-fix.css">
    ============================================ */
 
-/* ── Mobile header / hamburger ── */
+/* ── Tablet: show hamburger, hide inline nav ── */
 @media (max-width: 1100px) {
     .header-inner {
-        flex-wrap: nowrap;
-        align-items: center;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        padding: 10px 0 !important;
     }
-    .brand {
-        flex: 1;
-        width: auto;
-        justify-content: flex-start;
-    }
-    .mobile-menu-toggle {
-        display: inline-flex !important;
-        flex-shrink: 0;
-        z-index: 1001;
-    }
-    .main-nav {
-        display: flex !important;
-    }
+    .brand { flex: 1; width: auto; justify-content: flex-start; }
+    .mobile-menu-toggle { display: inline-flex !important; flex-shrink: 0; z-index: 1001; }
+    .main-nav { display: flex !important; }
 }
 
+/* ── Mobile: compact header ── */
 @media (max-width: 720px) {
+    /* Header shrinks to a tight bar */
+    .site-header { box-shadow: 0 4px 16px rgba(46,34,26,0.10); }
+
     .header-inner {
         flex-direction: row !important;
-        align-items: center;
-        padding: 12px 0;
+        align-items: center !important;
+        padding: 8px 0 !important;
+        gap: 10px !important;
     }
+
     .brand {
-        width: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
         flex: 1;
+        min-width: 0;
     }
+
+    /* Logo — small circle feel */
     .logo-img {
-        max-width: 90px !important;
+        max-width: 44px !important;
+        min-width: 44px !important;
+        height: 44px !important;
+        object-fit: contain;
+        border-radius: 50%;
     }
+
+    /* Brand text block */
+    .brand > div { min-width: 0; }
+
+    .brand .eyebrow {
+        display: none !important;  /* hidden on mobile — saves space */
+    }
+
     .brand h1 {
-        font-size: 1rem;
+        font-size: 0.95rem !important;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         line-height: 1.2;
     }
-    .brand .eyebrow {
-        font-size: 0.65rem;
-    }
 
-    /* Nav hidden, slides in from left */
-    .main-nav {
-        position: fixed !important;
-        top: 0 !important;
-        left: -100% !important;
-        width: 100% !important;
-        height: 100vh !important;
-        background: rgba(255,255,255,0.98) !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-        gap: 20px !important;
-        font-size: 1.2rem !important;
-        z-index: 1000 !important;
-        transition: left 0.3s ease !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        pointer-events: none;
-        transform: none !important;
-    }
-    .main-nav.active {
-        left: 0 !important;
-        pointer-events: auto;
-    }
-    .main-nav a,
-    .main-nav button {
-        font-size: 1.2rem;
-        padding: 12px 28px;
-        width: auto;
-        text-align: center;
-        border-bottom: none !important;
-    }
-
-    /* Hamburger */
+    /* Hamburger button */
     .mobile-menu-toggle {
         display: flex !important;
         flex-direction: column;
         justify-content: space-between;
-        width: 26px;
-        height: 20px;
+        width: 24px !important;
+        height: 18px !important;
         background: none;
         border: none;
         cursor: pointer;
@@ -95,22 +78,53 @@
     .mobile-menu-toggle span {
         display: block;
         width: 100%;
-        height: 2.5px;
+        height: 2px;
         background: var(--text-dark, #2f241b);
         border-radius: 2px;
         transition: all 0.3s ease;
         transform-origin: center;
     }
-    .mobile-menu-toggle.active span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+    .mobile-menu-toggle.active span:nth-child(1) { transform: rotate(45deg) translate(4px,4px); }
     .mobile-menu-toggle.active span:nth-child(2) { opacity: 0; }
-    .mobile-menu-toggle.active span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+    .mobile-menu-toggle.active span:nth-child(3) { transform: rotate(-45deg) translate(4px,-4px); }
 
-    /* General spacing */
-    .hero { padding: 32px 0 20px !important; }
-    .section { padding: 36px 0; }
-    button { padding: 11px 20px; font-size: 0.92rem; }
+    /* Full-screen slide-in nav */
+    .main-nav {
+        position: fixed !important;
+        top: 0 !important; left: -100% !important;
+        width: 100% !important; height: 100vh !important;
+        background: rgba(255,255,255,0.99) !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 18px !important;
+        font-size: 1.15rem !important;
+        z-index: 1000 !important;
+        transition: left 0.3s ease !important;
+        opacity: 1 !important; visibility: visible !important;
+        pointer-events: none;
+        transform: none !important;
+    }
+    .main-nav.active { left: 0 !important; pointer-events: auto; }
 
-    /* Product cards on home page */
+    .main-nav a, .main-nav button {
+        font-size: 1.15rem;
+        padding: 10px 24px;
+        width: auto;
+        text-align: center;
+        border-bottom: none !important;
+        border-radius: 12px;
+        background: transparent !important;
+        box-shadow: none !important;
+        color: var(--text-dark) !important;
+    }
+    .main-nav a:hover, .main-nav button:hover { background: var(--bg-soft) !important; }
+
+    /* Page general */
+    .hero { padding: 28px 0 16px !important; }
+    .section { padding: 32px 0; }
+
+    /* Home page product cards */
     .product-card, .order-card, .contact-card {
         min-height: 0 !important;
         padding: 14px !important;
@@ -118,7 +132,7 @@
 }
 
 @media (max-width: 400px) {
-    .logo-img { max-width: 72px !important; }
-    .brand h1 { font-size: 0.92rem; }
-    .hero-copy h2 { font-size: 1.7rem; }
+    .logo-img { max-width: 38px !important; min-width: 38px !important; height: 38px !important; }
+    .brand h1 { font-size: 0.85rem !important; }
+    .hero-copy h2 { font-size: 1.6rem !important; }
 }
