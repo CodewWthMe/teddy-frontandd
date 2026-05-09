@@ -158,8 +158,12 @@ async function confirmOrderSummary() {
     _injectPaymentStyles();
     const payEl = document.querySelector('input[name="checkout-payment"]:checked');
     const method = payEl ? payEl.value : 'Cash on Delivery';
-    if (/online|upi|qr|paytm/i.test(method)) showQRPaymentModal();
-    else await placeOrder(null);
+    if (/online|upi|qr|paytm/i.test(method)) {
+        closeOrderSummary(); // close the order form first so QR modal is visible
+        showQRPaymentModal();
+    } else {
+        await placeOrder(null);
+    }
 }
 
 // ── QR PAYMENT + MANDATORY SCREENSHOT ──
