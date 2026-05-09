@@ -173,7 +173,7 @@ function _injectPaymentStyles() {
 }
 
 function showQRPaymentModal() {
-    const s = dataManager.getSettings() || {}; const qrImg = s.paytmQrImage || 'paytm-qr.png'; const total = dataManager.getCartTotal(); _paymentScreenshotUrl = null;
+    const s = dataManager.getSettings() || {}; const qrImg = s.paytmQrImage || 'Your-qr-image.png'; const total = dataManager.getCartTotal(); _paymentScreenshotUrl = null;
     document.getElementById('cm-qr-modal')?.remove();
     const modal = document.createElement('div'); modal.id = 'cm-qr-modal'; modal.className = 'cm-mb';
     modal.innerHTML = `<div class="cm-m"><div class="cm-mh"><div style="font-size:2rem;margin-bottom:6px">&#128664;</div><h3>Pay via Paytm</h3><p>Scan &rarr; Pay &rarr; Upload screenshot &rarr; Place order</p></div><div class="cm-mb2"><div class="cm-ab"><div class="cm-al">Amount to Pay</div><div class="cm-av">&#8377;${total}</div><div class="cm-an">Pay this exact amount on Paytm</div></div><div class="cm-qw"><img src="${escHtml(qrImg)}" alt="Paytm QR" onerror="this.src='https://placehold.co/200x200?text=QR+Not+Found'"><p style="font-size:.72rem;color:#9b8a72;margin-top:6px">Can't scan? Open Paytm &rarr; Search by name</p></div><div class="cm-st">1&#65039;&#8419; Open <strong>Paytm</strong> &rarr; tap <strong>Scan &amp; Pay</strong><br>2&#65039;&#8419; Scan QR above &rarr; pay <strong>&#8377;${total}</strong><br>3&#65039;&#8419; <strong>Screenshot</strong> the success screen<br>4&#65039;&#8419; Upload it below &darr;</div><input type="file" id="cm-ss-input" accept="image/*" style="display:none" onchange="handleScreenshotFile(this)"><div class="cm-ua" id="cm-upload-area" onclick="document.getElementById('cm-ss-input').click()"><div class="cm-ui">&#128247;</div><div class="cm-ut">Upload Payment Screenshot</div><div class="cm-us">Tap here to choose from your gallery</div><img id="cm-ss-preview" class="cm-up" src="" alt="preview"><div class="cm-um" id="cm-ss-msg"></div></div><button class="cm-pb" id="cm-place-btn" disabled onclick="placeOrderAfterPayment()">&#128274;&nbsp; Upload Screenshot First</button><span class="cm-bl" onclick="closeQRModal()">&#8592; Back to order form</span></div></div>`;
@@ -316,7 +316,7 @@ function loadSettingsForm() {
             if (saveBtn) settingsDiv.insertBefore(qrDiv, saveBtn); else settingsDiv.appendChild(qrDiv);
         }
     }
-    const qrEl = document.getElementById('settings-qr-image'); if (qrEl) qrEl.value = s.paytmQrImage || 'paytm-qr.png';
+    const qrEl = document.getElementById('settings-qr-image'); if (qrEl) qrEl.value = s.paytmQrImage || 'Your-qr-image.png';
 }
 async function saveSettings() {
     const settings = { businessEmail: (document.getElementById('business-email')?.value || '').trim(), businessWhatsApp: (document.getElementById('business-whatsapp')?.value || '').trim(), paytmQrImage: (document.getElementById('settings-qr-image')?.value || 'paytm-qr.png').trim() };
