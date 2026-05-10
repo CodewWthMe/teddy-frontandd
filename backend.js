@@ -205,15 +205,15 @@ function showUpiSection() {
     section.style.display = 'block';
 }
 
-// ── toggleInlineQR — only updates label highlight styles, UPI always stays visible ──
+// toggleInlineQR — only changes label border colours, NEVER hides UPI section
 function toggleInlineQR() {
     var payEl = document.querySelector('input[name="checkout-payment"]:checked');
+    var isOnline = payEl && /online|upi/i.test(payEl.value);
     var codLbl = document.getElementById('pay-cod-label') || document.getElementById('cm-cod-lbl');
     var upiLbl = document.getElementById('pay-online-label') || document.getElementById('cm-upi-lbl');
-    var isOnline = payEl && /online|upi/i.test(payEl.value);
     if (codLbl) { codLbl.style.borderColor = isOnline ? '#e8d5b7' : '#8b7355'; codLbl.style.background = isOnline ? '#fff' : '#fff8f0'; }
     if (upiLbl) { upiLbl.style.borderColor = isOnline ? '#8b7355' : '#e8d5b7'; upiLbl.style.background = isOnline ? '#fff8f0' : '#fff'; }
-    // UPI ID section stays visible always
+    // UPI section is always visible — never hide it
 }
 
 function copyUpiId(upiId) {
