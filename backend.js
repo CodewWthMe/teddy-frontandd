@@ -1,4 +1,4 @@
-// backend.js — v5 (correct HTML IDs + real API URL)
+// backend.js — v6 (UPI ID instead of QR code)
 const API_URL = 'https://curled-macrame-api.onrender.com/api';
 
 class DataManager {
@@ -21,12 +21,6 @@ class DataManager {
         const fd = new FormData(); fd.append('image', file);
         const res = await fetch(this.apiUrl + '/upload-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Upload failed'); }
-        return res.json();
-    }
-    async uploadPaymentScreenshot(file) {
-        const fd = new FormData(); fd.append('image', file);
-        const res = await fetch(this.apiUrl + '/upload-payment-screenshot', { method: 'POST', body: fd });
-        if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Screenshot upload failed'); }
         return res.json();
     }
     async init() {
@@ -166,9 +160,9 @@ function checkoutCart() {
     var codRadio = document.querySelector('input[name="checkout-payment"][value="Cash on Delivery"]');
     if (codRadio) { codRadio.checked = true; }
 
-    // Hide and clear QR section
-    var qrSec = document.getElementById('inline-qr-section');
-    if (qrSec) { qrSec.style.display = 'none'; qrSec.innerHTML = ''; }
+    // Hide UPI section
+    var upiSec = document.getElementById('inline-qr-section');
+    if (upiSec) { upiSec.style.display = 'none'; upiSec.innerHTML = ''; }
 
     // Reset label highlights
     var codLbl = document.getElementById('pay-cod-label') || document.getElementById('cm-cod-lbl');
@@ -176,81 +170,82 @@ function checkoutCart() {
     if (codLbl) { codLbl.style.borderColor = '#8b7355'; codLbl.style.background = '#fff8f0'; }
     if (upiLbl) { upiLbl.style.borderColor = '#e8d5b7'; upiLbl.style.background = '#fff'; }
 
-    _paymentScreenshotUrl = null;
     modal.style.display = 'flex';
 }
 function closeOrderSummary() {
     var m = document.getElementById('order-summary-modal');
     if (m) m.style.display = 'none';
-    _paymentScreenshotUrl = null;
 }
 
-// ── TOGGLE INLINE QR — fires when radio changes ──
+// ── TOGGLE UPI SECTION — fires when radio changes ──
 function toggleInlineQR() {
     var payEl = document.querySelector('input[name="checkout-payment"]:checked');
     var section = document.getElementById('inline-qr-section');
-    // Support both old and new label IDs
     var codLbl = document.getElementById('pay-cod-label') || document.getElementById('cm-cod-lbl');
     var upiLbl = document.getElementById('pay-online-label') || document.getElementById('cm-upi-lbl');
     if (!section) return;
     var isOnline = payEl && /online|upi|qr|paytm/i.test(payEl.value);
     if (codLbl) { codLbl.style.borderColor = isOnline ? '#e8d5b7' : '#8b7355'; codLbl.style.background = isOnline ? '#fff' : '#fff8f0'; }
     if (upiLbl) { upiLbl.style.borderColor = isOnline ? '#8b7355' : '#e8d5b7'; upiLbl.style.background = isOnline ? '#fff8f0' : '#fff'; }
-    if (!isOnline) { section.style.display = 'none'; section.innerHTML = ''; _paymentScreenshotUrl = null; return; }
+    if (!isOnline) { section.style.display = 'none'; section.innerHTML = ''; return; }
+
     const s = dataManager.getSettings() || {};
-    const qrImg = s.paytmQrImage || 'Your-qr-image.png';
+    const upiId = s.upiId || '7415036637@ptyes';
     const total = dataManager.getCartTotal();
-    _paymentScreenshotUrl = null;
+
     section.innerHTML = `
-        <p style="font-size:.72rem;color:#8b7355;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px">Scan &amp; Pay with any UPI App</p>
-        <img src="${escHtml(qrImg)}" alt="Payment QR"
-            style="width:165px;height:165px;object-fit:contain;border-radius:12px;border:3px solid #e8d5b7;box-shadow:0 4px 16px rgba(0,0,0,.1);display:block;margin:0 auto 10px"
-            onerror="this.src='https://placehold.co/165x165/f5ede0/8b7355?text=QR+Code'">
-        <div style="background:#f0fdf4;border-radius:10px;padding:8px 14px;display:inline-block;border:1.5px solid #bbf7d0;margin-bottom:8px">
-            <p style="font-size:.68rem;color:#166534;font-weight:700;text-transform:uppercase;margin:0 0 1px">Amount to Pay</p>
-            <p style="font-size:1.45rem;font-weight:900;color:#15803d;margin:0">&#8377;${total}</p>
+        <p style="font-size:.72rem;color:#8b7355;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 12px">Pay via UPI</p>
+
+        <div style="background:#fff;border:2px solid #e8d5b7;border-radius:14px;padding:14px 16px;margin-bottom:12px;text-align:center">
+            <p style="font-size:.7rem;color:#9b8a72;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px">Send payment to this UPI ID</p>
+            <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+                <span id="upi-id-display" style="font-size:1.25rem;font-weight:900;color:#5a3e28;letter-spacing:.02em;font-family:monospace">${escHtml(upiId)}</span>
+                <button type="button" onclick="copyUpiId('${escHtml(upiId)}')" style="padding:6px 14px;font-size:.75rem;font-weight:700;border-radius:999px;background:#8b7355;color:#fff;border:none;cursor:pointer;box-shadow:none;min-width:auto;display:inline-flex;align-items:center;gap:5px" id="upi-copy-btn">&#128203; Copy</button>
+            </div>
         </div>
-        <p style="font-size:.72rem;color:#9b8a72;margin:0 0 12px;line-height:1.5">Open any UPI app &rarr; Scan &rarr; Pay &#8377;${total}<br>Screenshot the success screen, then upload below</p>
-        <input type="file" id="inline-ss-input" accept="image/*" style="display:none" onchange="handleInlineScreenshot(this)">
-        <div id="inline-upload-area" onclick="document.getElementById('inline-ss-input').click()"
-            style="border:2px dashed #8b7355;border-radius:12px;padding:14px;cursor:pointer;background:#fff;transition:all .2s">
-            <div style="font-size:1.4rem;margin-bottom:3px">&#128247;</div>
-            <p style="font-size:.82rem;font-weight:700;color:#5a3e28;margin:0 0 2px">Tap to upload payment screenshot</p>
-            <p style="font-size:.72rem;color:#9b8a72;margin:0">Choose from gallery</p>
-            <img id="inline-ss-preview" src="" alt="preview" style="display:none;max-width:100%;max-height:100px;object-fit:contain;border-radius:8px;margin-top:8px">
-            <p id="inline-ss-msg" style="font-size:.78rem;margin:6px 0 0;font-weight:600"></p>
+
+        <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border:1.5px solid #bbf7d0;margin-bottom:10px">
+            <p style="font-size:.75rem;color:#166534;font-weight:700;text-transform:uppercase;margin:0">Amount to Pay</p>
+            <p style="font-size:1.4rem;font-weight:900;color:#15803d;margin:0">&#8377;${total}</p>
+        </div>
+
+        <div style="background:#fff8f0;border-radius:10px;padding:10px 14px;border:1.5px solid #e8d5b7">
+            <p style="font-size:.78rem;color:#5a3e28;font-weight:700;margin:0 0 4px">&#128073; How to pay:</p>
+            <ol style="font-size:.76rem;color:#7a6255;line-height:1.7;margin:0;padding-left:16px">
+                <li>Open any UPI app (GPay, PhonePe, Paytm, etc.)</li>
+                <li>Go to <strong>Send Money</strong> or <strong>Pay by UPI ID</strong></li>
+                <li>Enter UPI ID: <strong>${escHtml(upiId)}</strong></li>
+                <li>Enter amount: <strong>&#8377;${total}</strong></li>
+                <li>Complete payment, then click <strong>Confirm Order</strong> below</li>
+            </ol>
         </div>`;
+
     section.style.display = 'block';
     setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
 }
 
-async function handleInlineScreenshot(input) {
-    if (!input.files || !input.files[0]) return;
-    const file = input.files[0];
-    const preview = document.getElementById('inline-ss-preview');
-    const msg = document.getElementById('inline-ss-msg');
-    const area = document.getElementById('inline-upload-area');
-    const fr = new FileReader(); fr.onload = e => { if (preview) { preview.src = e.target.result; preview.style.display = 'block'; } }; fr.readAsDataURL(file);
-    if (msg) { msg.style.color = '#92400e'; msg.textContent = '\u23F3 Uploading...'; }
-    try {
-        const result = await dataManager.uploadPaymentScreenshot(file); _paymentScreenshotUrl = result.url;
-        if (msg) { msg.style.color = '#16a34a'; msg.textContent = '\u2705 Uploaded! Now click Confirm Order.'; }
-        if (area) { area.style.borderColor = '#22c55e'; area.style.borderStyle = 'solid'; area.style.background = '#f0fdf4'; }
-    } catch (err) {
-        _paymentScreenshotUrl = null;
-        if (msg) { msg.style.color = '#dc2626'; msg.textContent = '\u274C Failed \u2014 ' + err.message + '. Try again.'; }
-    }
+function copyUpiId(upiId) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(upiId).then(() => { _showCopied(); }).catch(() => { _fallbackCopy(upiId); });
+    } else { _fallbackCopy(upiId); }
+}
+function _fallbackCopy(text) {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0'; document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand('copy'); _showCopied(); } catch(e) {} document.body.removeChild(ta);
+}
+function _showCopied() {
+    const btn = document.getElementById('upi-copy-btn'); if (!btn) return;
+    const orig = btn.innerHTML; btn.innerHTML = '&#10003; Copied!'; btn.style.background = '#16a34a';
+    setTimeout(() => { btn.innerHTML = orig; btn.style.background = '#8b7355'; }, 2000);
 }
 
 // ── CONFIRM ORDER ──
 async function confirmOrderSummary() {
     const payEl = document.querySelector('input[name="checkout-payment"]:checked');
     const method = payEl ? payEl.value : 'Cash on Delivery';
-    if (/online|upi|qr|paytm/i.test(method)) {
-        if (!_paymentScreenshotUrl) { alert('Please upload your payment screenshot first.\n\nScroll down and tap the upload area below the QR code.'); return; }
-        await placeOrder(_paymentScreenshotUrl);
-    } else { await placeOrder(null); }
+    await placeOrder(null);
 }
+
 // ── ORDER ──
 function generateOrderRef() { const n = new Date(); return 'CM-' + String(n.getFullYear()).slice(-2) + String(n.getMonth() + 1).padStart(2, '0') + String(n.getDate()).padStart(2, '0') + '-' + String(Math.floor(Math.random() * 900) + 100); }
 async function placeOrder(paymentScreenshotUrl) {
@@ -266,7 +261,8 @@ function showOrderConfirmation(order) {
     document.getElementById('order-confirm-toast')?.remove();
     const style = document.createElement('style'); style.textContent = '@keyframes toastIn{from{opacity:0;transform:translate(-50%,-50%) scale(.8)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}'; document.head.appendChild(style);
     const t = document.createElement('div'); t.id = 'order-confirm-toast';
-    t.innerHTML = `<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:24px;padding:32px 28px;box-shadow:0 24px 60px rgba(45,33,23,.22);z-index:9999;max-width:340px;width:90%;text-align:center;animation:toastIn .35s cubic-bezier(.34,1.56,.64,1) both"><div style="font-size:2.8rem;margin-bottom:8px">&#127881;</div><h3 style="color:#2f241b;margin-bottom:6px">Order Placed!</h3><p style="color:#8b7355;font-size:.9rem;margin-bottom:4px">Ref: <strong>${escHtml(order.ref)}</strong></p>${order.paymentScreenshot ? `<p style="color:#16a34a;font-size:.82rem;margin-bottom:4px">&#9989; Payment screenshot received</p>` : ''}<p style="color:#5a5047;font-size:.88rem;margin-bottom:18px;line-height:1.5">Thank you, ${escHtml(order.name)}!<br>We'll contact you on <strong>${escHtml(order.phone)}</strong> to confirm.</p><button onclick="document.getElementById('order-confirm-toast').remove()" style="background:#8b7355;color:#fff;border:none;border-radius:999px;padding:12px 28px;font-weight:700;cursor:pointer">OK, Done!</button></div>`;
+    const isOnline = /online|upi/i.test(order.payment || '');
+    t.innerHTML = `<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:24px;padding:32px 28px;box-shadow:0 24px 60px rgba(45,33,23,.22);z-index:9999;max-width:340px;width:90%;text-align:center;animation:toastIn .35s cubic-bezier(.34,1.56,.64,1) both"><div style="font-size:2.8rem;margin-bottom:8px">&#127881;</div><h3 style="color:#2f241b;margin-bottom:6px">Order Placed!</h3><p style="color:#8b7355;font-size:.9rem;margin-bottom:4px">Ref: <strong>${escHtml(order.ref)}</strong></p>${isOnline ? `<p style="color:#16a34a;font-size:.82rem;margin-bottom:4px">&#9989; UPI Payment selected — please complete payment if not done yet</p>` : ''}<p style="color:#5a5047;font-size:.88rem;margin-bottom:18px;line-height:1.5">Thank you, ${escHtml(order.name)}!<br>We'll contact you on <strong>${escHtml(order.phone)}</strong> to confirm.</p><button onclick="document.getElementById('order-confirm-toast').remove()" style="background:#8b7355;color:#fff;border:none;border-radius:999px;padding:12px 28px;font-weight:700;cursor:pointer">OK, Done!</button></div>`;
     document.body.appendChild(t);
 }
 function sendWhatsAppOrder(order) {
@@ -274,7 +270,9 @@ function sendWhatsAppOrder(order) {
     const num = s.businessWhatsApp.replace(/[^0-9]/g, ''); let savings = 0;
     const lines = order.cart.map(i => { const d = parseInt(i.discount) || 0; const up = d > 0 ? Math.round(i.price - i.price * d / 100) : i.price; if (d > 0) savings += (i.price - up) * i.quantity; let l = `  • ${i.name}`; if (i.quantity > 1) l += ` x${i.quantity}`; l += d > 0 ? `\n    ₹${i.price} → ₹${up} (${d}% off)` : ` — ₹${up}`; if (i.quantity > 1) l += `\n    Subtotal: ₹${up * i.quantity}`; return l; }).join('\n');
     const date = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
-    const msg = `🛍️ *NEW ORDER — ${order.ref}*\n━━━━━━━━━━━━━━━━━\n📅 ${date}\n\n👤 *Customer*\nName: ${order.name}\n📱 ${order.phone}${order.email ? '\n✉️ ' + order.email : ''}\n📍 ${order.address}\n\n🛒 *Items*\n${lines}\n\n━━━━━━━━━━━━━━━━━\n${savings > 0 ? `💰 Saved: ₹${savings}\n` : ''}💰 *Total: ₹${order.total}*\n${/online|upi|qr|paytm/i.test(order.payment || '') ? '💳 Online Payment (Paytm QR)' : '💵 Cash on Delivery'}${order.paymentScreenshot ? '\n📸 *Payment Screenshot:*\n' + order.paymentScreenshot : ''}\n━━━━━━━━━━━━━━━━━\nPlease confirm & arrange delivery. 🙏`;
+    const upiId = s.upiId || '7415036637@ptyes';
+    const isOnline = /online|upi/i.test(order.payment || '');
+    const msg = `🛍️ *NEW ORDER — ${order.ref}*\n━━━━━━━━━━━━━━━━━\n📅 ${date}\n\n👤 *Customer*\nName: ${order.name}\n📱 ${order.phone}${order.email ? '\n✉️ ' + order.email : ''}\n📍 ${order.address}\n\n🛒 *Items*\n${lines}\n\n━━━━━━━━━━━━━━━━━\n${savings > 0 ? `💰 Saved: ₹${savings}\n` : ''}💰 *Total: ₹${order.total}*\n${isOnline ? `💳 Online Payment (UPI)\n🔗 UPI ID: ${upiId}` : '💵 Cash on Delivery'}\n━━━━━━━━━━━━━━━━━\nPlease confirm & arrange delivery. 🙏`;
     setTimeout(() => window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(msg), '_blank'), 600);
 }
 
@@ -349,31 +347,36 @@ async function loadOrdersList() {
     const l = document.getElementById('orders-list'); if (!l) return;
     try {
         const orders = await dataManager.getOrders(); if (!orders.length) { l.innerHTML = '<p style="color:#999">No orders yet.</p>'; return; }
-        l.innerHTML = orders.map(o => `<div class="admin-product" style="flex-direction:column;align-items:flex-start;gap:8px"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;flex-wrap:wrap;gap:6px"><div><strong>${escHtml(o.ref || '—')}</strong><span style="font-size:.8rem;color:#999;margin-left:8px">${escHtml(o.date || '')}</span></div><button onclick="deleteAdminOrder(${o.timestamp})" style="background:#e53935;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:.75rem;font-weight:700;cursor:pointer">Delete</button></div><div style="font-size:.85rem"><strong>${escHtml(o.name)}</strong> • ${escHtml(o.phone)}${o.email ? ' • ' + escHtml(o.email) : ''}</div><div style="font-size:.82rem;color:#666">&#8377;${o.total} • ${escHtml(o.payment || '—')}</div><div style="font-size:.8rem;color:#666">&#128205; ${escHtml(o.address || '—')}</div><div style="font-size:.8rem;color:#999">${(o.cart || []).map(i => `${escHtml(i.name)} x${i.quantity}`).join(', ')}</div>${o.paymentScreenshot ? `<div style="margin-top:4px"><p style="font-size:.78rem;font-weight:700;color:#16a34a;margin:0 0 5px">&#128247; Payment Screenshot</p><a href="${escHtml(o.paymentScreenshot)}" target="_blank"><img src="${escHtml(o.paymentScreenshot)}" alt="Payment proof" style="max-width:160px;max-height:120px;object-fit:cover;border-radius:10px;border:2px solid #bbf7d0;display:block;cursor:pointer"></a></div>` : '<p style="font-size:.76rem;color:#9ca3af;margin:0">&#128181; Cash on Delivery</p>'}</div>`).join('');
+        l.innerHTML = orders.map(o => `<div class="admin-product" style="flex-direction:column;align-items:flex-start;gap:8px"><div style="display:flex;justify-content:space-between;width:100%;align-items:center;flex-wrap:wrap;gap:6px"><div><strong>${escHtml(o.ref || '—')}</strong><span style="font-size:.8rem;color:#999;margin-left:8px">${escHtml(o.date || '')}</span></div><button onclick="deleteAdminOrder(${o.timestamp})" style="background:#e53935;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:.75rem;font-weight:700;cursor:pointer">Delete</button></div><div style="font-size:.85rem"><strong>${escHtml(o.name)}</strong> • ${escHtml(o.phone)}${o.email ? ' • ' + escHtml(o.email) : ''}</div><div style="font-size:.82rem;color:#666">&#8377;${o.total} • ${escHtml(o.payment || '—')}</div><div style="font-size:.8rem;color:#666">&#128205; ${escHtml(o.address || '—')}</div><div style="font-size:.8rem;color:#999">${(o.cart || []).map(i => `${escHtml(i.name)} x${i.quantity}`).join(', ')}</div></div>`).join('');
     } catch (err) { l.innerHTML = `<p style="color:#e53935">Error: ${escHtml(err.message)}</p>`; }
 }
 async function deleteAdminOrder(ts) { if (!confirm('Delete this order?')) return; try { await dataManager.deleteOrder(ts); loadOrdersList(); } catch (err) { alert('Error: ' + err.message); } }
 
-// ── SETTINGS — matches YOUR HTML ids: business-email, business-whatsapp ──
+// ── SETTINGS ──
 function loadSettingsForm() {
     const s = dataManager.getSettings(); if (!s) return;
     const emailEl = document.getElementById('business-email'), waEl = document.getElementById('business-whatsapp');
     if (emailEl) emailEl.value = s.businessEmail || '';
     if (waEl) waEl.value = s.businessWhatsApp || '';
-    // Inject QR field automatically before Save button
-    if (!document.getElementById('settings-qr-image')) {
+    // Inject UPI ID field automatically before Save button
+    if (!document.getElementById('settings-upi-id')) {
         const settingsDiv = document.querySelector('.settings-form');
         if (settingsDiv) {
             const saveBtn = settingsDiv.querySelector('button');
-            const qrDiv = document.createElement('div'); qrDiv.style.cssText = 'margin:12px 0';
-            qrDiv.innerHTML = `<label style="display:block;font-weight:600;font-size:.9rem;margin-bottom:6px">&#128461; Paytm QR Image Filename</label><input id="settings-qr-image" type="text" placeholder="paytm-qr.png" style="width:100%;padding:10px 12px;border:2px solid #e8d5b7;border-radius:10px;font-size:.9rem;box-sizing:border-box"><p style="font-size:.74rem;color:#8b7355;margin-top:5px">Type the filename of your QR image (e.g. paytm-qr.png). The file must be in your GitHub website folder.</p>`;
-            if (saveBtn) settingsDiv.insertBefore(qrDiv, saveBtn); else settingsDiv.appendChild(qrDiv);
+            const upiDiv = document.createElement('div'); upiDiv.style.cssText = 'margin:12px 0';
+            upiDiv.innerHTML = `<label style="display:block;font-weight:600;font-size:.9rem;margin-bottom:6px">&#128247; Your UPI ID</label><input id="settings-upi-id" type="text" placeholder="yourname@upi" style="width:100%;padding:10px 12px;border:2px solid #e8d5b7;border-radius:10px;font-size:.9rem;box-sizing:border-box"><p style="font-size:.74rem;color:#8b7355;margin-top:5px">This UPI ID will be shown to customers when they choose Online Payment.</p>`;
+            if (saveBtn) settingsDiv.insertBefore(upiDiv, saveBtn); else settingsDiv.appendChild(upiDiv);
         }
     }
-    const qrEl = document.getElementById('settings-qr-image'); if (qrEl) qrEl.value = s.paytmQrImage || 'Your-qr-image.png';
+    const upiEl = document.getElementById('settings-upi-id');
+    if (upiEl) upiEl.value = s.upiId || '7415036637@ptyes';
 }
 async function saveSettings() {
-    const settings = { businessEmail: (document.getElementById('business-email')?.value || '').trim(), businessWhatsApp: (document.getElementById('business-whatsapp')?.value || '').trim(), paytmQrImage: (document.getElementById('settings-qr-image')?.value || 'paytm-qr.png').trim() };
+    const settings = {
+        businessEmail: (document.getElementById('business-email')?.value || '').trim(),
+        businessWhatsApp: (document.getElementById('business-whatsapp')?.value || '').trim(),
+        upiId: (document.getElementById('settings-upi-id')?.value || '7415036637@ptyes').trim()
+    };
     try { await dataManager.saveSettings(settings); alert('✅ Settings Saved'); } catch (err) { alert('Error: ' + err.message); }
 }
 
@@ -389,4 +392,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (grid) { if (dataManager.getProducts().length > 0) dataManager.updateProductDisplay(); else grid.innerHTML = '<p class="no-products">No products yet. Check back soon!</p>'; }
     initializeProductForm();
     if (dataManager.isAdminLoggedIn() && document.getElementById('admin-login') && document.getElementById('admin-panel')) showAdminPanel();
+
+    // Mobile menu toggle
+    const toggle = document.querySelector('.mobile-menu-toggle');
+    const nav = document.querySelector('.main-nav');
+    if (toggle && nav) {
+        toggle.addEventListener('click', () => {
+            toggle.classList.toggle('active');
+            nav.classList.toggle('active');
+        });
+        nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+            toggle.classList.remove('active');
+            nav.classList.remove('active');
+        }));
+    }
+    document.querySelectorAll('.section-fade').forEach(el => el.style.opacity = '1');
 });
