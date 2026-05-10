@@ -16,9 +16,9 @@
     <meta name="msapplication-TileColor" content="#8b7355">
     <meta name="format-detection" content="telephone=no">
     <meta name="x-ua-compatible" content="IE=edge">
-    <title>Curled Macrame</title>
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="mobile-fix.css">
+    <title>Curled Macrame</title>
    
 </head>
 
@@ -236,31 +236,62 @@
 
     <!-- Order Summary Modal -->
     <div id="order-summary-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeOrderSummary()">&times;</span>
-            <h2 style="margin-bottom: 20px; color: var(--accent);">🧾 Order Summary</h2>
-            <div id="order-summary-items" class="checkout-summary-list"></div>
-            <div class="cart-total-row" style="margin-top: 16px;">
-                <span>Total</span>
-                <strong id="order-summary-total">Rs 0.00</strong>
+        <div class="modal-content" style="max-width:500px;padding:0;border-radius:20px;overflow:hidden">
+
+            <!-- Modal Header -->
+            <div style="background:linear-gradient(135deg,#8b7355,#6b5a3e);padding:18px 22px 14px;color:#fff;position:relative">
+                <span class="close" onclick="closeOrderSummary()" style="color:#fff;opacity:.75;top:14px;right:18px">&times;</span>
+                <h2 style="margin:0;font-size:1.2rem;font-weight:800;color:#fff">&#x1F9FE; Order Summary</h2>
+                <p style="margin:3px 0 0;opacity:.78;font-size:.8rem">Review your items and fill in your details</p>
             </div>
-            <div class="checkout-form">
-                <label for="checkout-name">Full name</label>
-                <input id="checkout-name" type="text" placeholder="Enter your full name">
-                <label for="checkout-phone">Phone number</label>
-                <input id="checkout-phone" type="tel" placeholder="Enter your phone number">
-                <label for="checkout-email">Email address</label>
-                <input id="checkout-email" type="email" placeholder="Enter your email address">
-                <label for="checkout-address">Delivery address</label>
-                <textarea id="checkout-address" rows="4" placeholder="Enter delivery address"></textarea>
-                <div class="checkout-payment-options">
-                    <label><input type="radio" name="checkout-payment" value="Cash on Delivery" checked> Cash on Delivery</label>
-                    <label><input type="radio" name="checkout-payment" value="Online Payment (QR Code)"> Online Payment</label>
+
+            <!-- Scrollable Body -->
+            <div style="padding:18px 22px;max-height:70vh;overflow-y:auto">
+
+                <!-- Items List -->
+                <div id="order-summary-items" class="checkout-summary-list"></div>
+
+                <!-- Total Row -->
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:#fef9f0;border-radius:10px;margin:10px 0 16px;border:1px solid #e8d5b7">
+                    <span style="font-weight:700;color:#5a4a3a;font-size:.9rem">Order Total</span>
+                    <strong id="order-summary-total" style="font-size:1.15rem;color:#8b7355">Rs 0.00</strong>
+                </div>
+
+                <!-- Customer Form -->
+                <div class="checkout-form">
+                    <label for="checkout-name" style="font-size:.8rem;font-weight:700;color:#5a4a3a">Full Name *</label>
+                    <input id="checkout-name" type="text" placeholder="Enter your full name">
+                    <label for="checkout-phone" style="font-size:.8rem;font-weight:700;color:#5a4a3a">Phone Number *</label>
+                    <input id="checkout-phone" type="tel" placeholder="Enter your phone number">
+                    <label for="checkout-email" style="font-size:.8rem;font-weight:700;color:#5a4a3a">Email (optional)</label>
+                    <input id="checkout-email" type="email" placeholder="Enter your email address">
+                    <label for="checkout-address" style="font-size:.8rem;font-weight:700;color:#5a4a3a">Delivery Address *</label>
+                    <textarea id="checkout-address" rows="3" placeholder="Enter full delivery address"></textarea>
+
+                    <!-- Payment Method -->
+                    <p style="font-size:.8rem;font-weight:700;color:#5a4a3a;margin:10px 0 8px">Payment Method</p>
+                    <div style="display:flex;gap:10px">
+                        <label id="pay-cod-label" onclick="document.getElementById('pay-cod-label').style.borderColor='#8b7355';document.getElementById('pay-cod-label').style.background='#fff8f0';document.getElementById('pay-online-label').style.borderColor='#e8d5b7';document.getElementById('pay-online-label').style.background='#fff'" style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:2px solid #8b7355;border-radius:12px;cursor:pointer;background:#fff8f0;font-size:.84rem;font-weight:600;color:#5a3e28">
+                            <input type="radio" name="checkout-payment" value="Cash on Delivery" checked onchange="toggleInlineQR()">
+                            &#x1F4B5; Cash on Delivery
+                        </label>
+                        <label id="pay-online-label" onclick="document.getElementById('pay-online-label').style.borderColor='#8b7355';document.getElementById('pay-online-label').style.background='#fff8f0';document.getElementById('pay-cod-label').style.borderColor='#e8d5b7';document.getElementById('pay-cod-label').style.background='#fff'" style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:2px solid #e8d5b7;border-radius:12px;cursor:pointer;background:#fff;font-size:.84rem;font-weight:600;color:#5a3e28">
+                            <input type="radio" name="checkout-payment" value="Online Payment (QR Code)" onchange="toggleInlineQR()">
+                            &#x1F4F2; Online Payment
+                        </label>
+                    </div>
+
+                    <!-- Inline QR Section — appears when Online Payment is selected -->
+                    <div id="inline-qr-section" style="display:none;margin-top:12px;background:#faf7f3;border-radius:14px;padding:16px 14px;border:1.5px solid #e8d5b7">
+                        <!-- Populated by toggleInlineQR() in backend.js -->
+                    </div>
                 </div>
             </div>
-            <div class="summary-actions">
-                <button class="checkout-btn" onclick="confirmOrderSummary()">Confirm Order</button>
-                <button class="clear-cart-btn" onclick="closeOrderSummary()">Back to Cart</button>
+
+            <!-- Footer Buttons -->
+            <div style="padding:14px 22px 18px;border-top:1px solid #f0e8dc;display:flex;gap:10px;background:#fff">
+                <button class="checkout-btn" onclick="confirmOrderSummary()" style="flex:1;margin:0">&#x2713; Confirm Order</button>
+                <button class="clear-cart-btn" onclick="closeOrderSummary()" style="margin:0;flex-shrink:0">&#x2190; Back</button>
             </div>
         </div>
     </div>
