@@ -160,46 +160,29 @@ function checkoutCart() {
     var codRadio = document.querySelector('input[name="checkout-payment"][value="Cash on Delivery"]');
     if (codRadio) { codRadio.checked = true; }
 
-    // Hide UPI section
-    var upiSec = document.getElementById('inline-qr-section');
-    if (upiSec) { upiSec.style.display = 'none'; upiSec.innerHTML = ''; }
-
-    // Reset label highlights
-    var codLbl = document.getElementById('pay-cod-label') || document.getElementById('cm-cod-lbl');
-    var upiLbl = document.getElementById('pay-online-label') || document.getElementById('cm-upi-lbl');
-    if (codLbl) { codLbl.style.borderColor = '#8b7355'; codLbl.style.background = '#fff8f0'; }
-    if (upiLbl) { upiLbl.style.borderColor = '#e8d5b7'; upiLbl.style.background = '#fff'; }
-
     modal.style.display = 'flex';
+    // Always show UPI section immediately
+    setTimeout(showUpiSection, 50);
 }
 function closeOrderSummary() {
     var m = document.getElementById('order-summary-modal');
     if (m) m.style.display = 'none';
 }
 
-// ── TOGGLE UPI SECTION — fires when radio changes ──
-function toggleInlineQR() {
-    var payEl = document.querySelector('input[name="checkout-payment"]:checked');
-    var section = document.getElementById('inline-qr-section');
-    var codLbl = document.getElementById('pay-cod-label') || document.getElementById('cm-cod-lbl');
-    var upiLbl = document.getElementById('pay-online-label') || document.getElementById('cm-upi-lbl');
+// ── Always show UPI section (called on checkout open) ──
+function showUpiSection() {
+    const section = document.getElementById('inline-qr-section');
     if (!section) return;
-    var isOnline = payEl && /online|upi|qr|paytm/i.test(payEl.value);
-    if (codLbl) { codLbl.style.borderColor = isOnline ? '#e8d5b7' : '#8b7355'; codLbl.style.background = isOnline ? '#fff' : '#fff8f0'; }
-    if (upiLbl) { upiLbl.style.borderColor = isOnline ? '#8b7355' : '#e8d5b7'; upiLbl.style.background = isOnline ? '#fff8f0' : '#fff'; }
-    if (!isOnline) { section.style.display = 'none'; section.innerHTML = ''; return; }
-
     const s = dataManager.getSettings() || {};
     const upiId = s.upiId || '7415036637@ptyes';
     const total = dataManager.getCartTotal();
-
     section.innerHTML = `
-        <p style="font-size:.72rem;color:#8b7355;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 12px">Pay via UPI</p>
+        <p style="font-size:.72rem;color:#8b7355;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px">&#128247; Pay via UPI</p>
 
-        <div style="background:#fff;border:2px solid #e8d5b7;border-radius:14px;padding:14px 16px;margin-bottom:12px;text-align:center">
+        <div style="background:#fff;border:2px solid #e8d5b7;border-radius:14px;padding:14px 16px;margin-bottom:10px;text-align:center">
             <p style="font-size:.7rem;color:#9b8a72;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px">Send payment to this UPI ID</p>
             <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
-                <span id="upi-id-display" style="font-size:1.25rem;font-weight:900;color:#5a3e28;letter-spacing:.02em;font-family:monospace">${escHtml(upiId)}</span>
+                <span id="upi-id-display" style="font-size:1.2rem;font-weight:900;color:#5a3e28;letter-spacing:.02em;font-family:monospace">${escHtml(upiId)}</span>
                 <button type="button" onclick="copyUpiId('${escHtml(upiId)}')" style="padding:6px 14px;font-size:.75rem;font-weight:700;border-radius:999px;background:#8b7355;color:#fff;border:none;cursor:pointer;box-shadow:none;min-width:auto;display:inline-flex;align-items:center;gap:5px" id="upi-copy-btn">&#128203; Copy</button>
             </div>
         </div>
@@ -219,9 +202,18 @@ function toggleInlineQR() {
                 <li>Complete payment, then click <strong>Confirm Order</strong> below</li>
             </ol>
         </div>`;
-
     section.style.display = 'block';
-    setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+}
+
+// ── toggleInlineQR — only updates label highlight styles, UPI always stays visible ──
+function toggleInlineQR() {
+    var payEl = document.querySelector('input[name="checkout-payment"]:checked');
+    var codLbl = document.getElementById('pay-cod-label') || document.getElementById('cm-cod-lbl');
+    var upiLbl = document.getElementById('pay-online-label') || document.getElementById('cm-upi-lbl');
+    var isOnline = payEl && /online|upi/i.test(payEl.value);
+    if (codLbl) { codLbl.style.borderColor = isOnline ? '#e8d5b7' : '#8b7355'; codLbl.style.background = isOnline ? '#fff' : '#fff8f0'; }
+    if (upiLbl) { upiLbl.style.borderColor = isOnline ? '#8b7355' : '#e8d5b7'; upiLbl.style.background = isOnline ? '#fff8f0' : '#fff'; }
+    // UPI ID section stays visible always
 }
 
 function copyUpiId(upiId) {
