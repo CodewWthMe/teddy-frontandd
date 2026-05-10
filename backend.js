@@ -153,14 +153,79 @@ function checkoutCart() {
 }
 function closeOrderSummary() { const m = document.getElementById('order-summary-modal'); if (m) m.style.display = 'none'; }
 
+// ── TOGGLE INLINE QR — called when radio button changes ──
+function toggleInlineQR() {
+    const payEl = document.querySelector('input[name="checkout-payment"]:checked');
+    const section = document.getElementById('inline-qr-section');
+    if (!section) return;
+
+    if (payEl && /online|upi|qr|paytm/i.test(payEl.value)) {
+        const s = dataManager.getSettings() || {};
+        const qrImg = s.paytmQrImage || 'Your-qr-image.png';
+        const total = dataManager.getCartTotal();
+        _paymentScreenshotUrl = null;
+        section.innerHTML = `
+            <div style="text-align:center;padding:4px 0 10px">
+                <p style="font-size:.75rem;color:#8b7355;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px">Scan & Pay with any UPI App</p>
+                <img src="${escHtml(qrImg)}" alt="Payment QR Code"
+                    style="width:160px;height:160px;object-fit:contain;border-radius:12px;border:3px solid #e8d5b7;box-shadow:0 4px 16px rgba(0,0,0,.1)"
+                    onerror="this.src='https://placehold.co/160x160?text=QR+Not+Found'">
+                <div style="margin:10px auto 8px;background:#f0fdf4;border-radius:10px;padding:8px 16px;display:inline-block;min-width:140px;border:1.5px solid #bbf7d0">
+                    <p style="font-size:.7rem;color:#166534;font-weight:700;text-transform:uppercase;margin:0 0 2px">Amount to Pay</p>
+                    <p style="font-size:1.5rem;font-weight:900;color:#15803d;margin:0">&#8377;${total}</p>
+                </div>
+                <p style="font-size:.73rem;color:#9b8a72;margin:2px 0 12px;line-height:1.5">Open any UPI app &rarr; Scan QR &rarr; Pay &#8377;${total}<br>Then take a screenshot and upload it below</p>
+            </div>
+            <input type="file" id="inline-ss-input" accept="image/*" style="display:none" onchange="handleInlineScreenshot(this)">
+            <div id="inline-upload-area" onclick="document.getElementById('inline-ss-input').click()"
+                style="border:2px dashed #8b7355;border-radius:12px;padding:14px 12px;text-align:center;cursor:pointer;background:#fff;transition:all .2s">
+                <div style="font-size:1.5rem;margin-bottom:3px">&#128247;</div>
+                <p style="font-size:.84rem;font-weight:700;color:#5a3e28;margin:0 0 2px">Upload Payment Screenshot</p>
+                <p style="font-size:.73rem;color:#9b8a72;margin:0">Tap here to choose from gallery</p>
+                <img id="inline-ss-preview" src="" alt="preview"
+                    style="display:none;max-width:100%;max-height:110px;object-fit:contain;border-radius:8px;margin-top:8px;border:1.5px solid #e8d5b7">
+                <p id="inline-ss-msg" style="font-size:.8rem;margin:6px 0 0;font-weight:600;color:#92400e"></p>
+            </div>`;
+        section.style.display = 'block';
+        section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        section.style.display = 'none';
+        section.innerHTML = '';
+        _paymentScreenshotUrl = null;
+    }
+}
+
+async function handleInlineScreenshot(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const preview = document.getElementById('inline-ss-preview');
+    const msg = document.getElementById('inline-ss-msg');
+    const area = document.getElementById('inline-upload-area');
+    const fr = new FileReader();
+    fr.onload = e => { if (preview) { preview.src = e.target.result; preview.style.display = 'block'; } };
+    fr.readAsDataURL(file);
+    if (msg) { msg.style.color = '#92400e'; msg.textContent = '\u23F3 Uploading screenshot...'; }
+    try {
+        const result = await dataManager.uploadPaymentScreenshot(file);
+        _paymentScreenshotUrl = result.url;
+        if (msg) { msg.style.color = '#16a34a'; msg.textContent = '\u2705 Uploaded! Now click Confirm Order.'; }
+        if (area) { area.style.borderColor = '#22c55e'; area.style.borderStyle = 'solid'; area.style.background = '#f0fdf4'; }
+    } catch (err) {
+        _paymentScreenshotUrl = null;
+        if (msg) { msg.style.color = '#dc2626'; msg.textContent = '\u274C Failed \u2014 ' + err.message + '. Try again.'; }
+    }
+}
+
 // ── CONFIRM ORDER — your button calls this ──
 async function confirmOrderSummary() {
-    _injectPaymentStyles();
     const payEl = document.querySelector('input[name="checkout-payment"]:checked');
     const method = payEl ? payEl.value : 'Cash on Delivery';
     if (/online|upi|qr|paytm/i.test(method)) {
-        closeOrderSummary(); // close the order form first so QR modal is visible
-        showQRPaymentModal();
+        if (!_paymentScreenshotUrl) {
+            alert('Please upload your payment screenshot first.\n\nTap the upload area below the QR code.');
+            return;
+        }
+        await placeOrder(_paymentScreenshotUrl);
     } else {
         await placeOrder(null);
     }
