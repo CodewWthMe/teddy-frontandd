@@ -146,12 +146,33 @@ function removeCartItem(id) { dataManager.removeFromCart(id); loadCartItems(); u
 function checkoutCart() {
     const cart = dataManager.getCart(); if (!cart.length) { alert('Your cart is empty!'); return; }
     closeCart();
-    const modal = document.getElementById('order-summary-modal'); if (modal) modal.style.display = 'flex';
+    const modal = document.getElementById('order-summary-modal'); if (!modal) return;
+    modal.style.display = 'flex';
     const itemsList = document.getElementById('order-summary-items');
     if (itemsList) itemsList.innerHTML = cart.map(item => { const disc = parseInt(item.discount) || 0; const up = disc > 0 ? Math.round(item.price - item.price * disc / 100) : item.price; return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0e8dc;font-size:.88rem"><span>${escHtml(item.name)} x${item.quantity}</span><span>&#8377;${up * item.quantity}</span></div>`; }).join('');
     const total = document.getElementById('order-summary-total'); if (total) total.innerHTML = '&#8377;' + dataManager.getCartTotal();
+
+    // Inject inline QR section if not already in the HTML
+    if (!document.getElementById('inline-qr-section')) {
+        const qrDiv = document.createElement('div');
+        qrDiv.id = 'inline-qr-section';
+        qrDiv.style.cssText = 'display:none;margin-top:12px;background:#faf7f3;border-radius:14px;padding:16px 14px;border:1.5px solid #e8d5b7';
+        const payOpts = modal.querySelector('.checkout-payment-options');
+        const form = modal.querySelector('.checkout-form');
+        const anchor = payOpts || form;
+        if (anchor) anchor.insertAdjacentElement('afterend', qrDiv);
+    }
+
+    // Wire up radio buttons with onchange handler (works even on old index.html)
+    modal.querySelectorAll('input[name="checkout-payment"]').forEach(r => { r.onchange = toggleInlineQR; });
+    _paymentScreenshotUrl = null;
 }
-function closeOrderSummary() { const m = document.getElementById('order-summary-modal'); if (m) m.style.display = 'none'; }
+function closeOrderSummary() {
+    const m = document.getElementById('order-summary-modal'); if (m) m.style.display = 'none';
+    // Reset QR section for next open
+    const s = document.getElementById('inline-qr-section'); if (s) { s.style.display = 'none'; s.innerHTML = ''; }
+    _paymentScreenshotUrl = null;
+}
 
 // ── TOGGLE INLINE QR — called when radio button changes ──
 function toggleInlineQR() {
