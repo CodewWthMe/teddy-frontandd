@@ -57,7 +57,6 @@
                     </aside>
                     <div class="products-display">
                         <div id="all-products-grid" class="product-grid">
-                          
                             <!-- Products will be loaded here by JavaScript -->
                         </div>
                     </div>
@@ -119,6 +118,7 @@
                         <input type="email" id="business-email" placeholder="curledm@gmail.com" required>
                         <label>📱 Business WhatsApp Number:</label>
                         <input type="text" id="business-whatsapp" placeholder="+917415036637" required>
+                        <!-- UPI ID field is injected here automatically by backend.js -->
                         <button onclick="saveSettings()" style="background: var(--accent); color: white;">💾 Save Settings</button>
                     </div>
                 </div>
@@ -167,7 +167,7 @@
                     <span class="cart-total" id="cart-total">Rs 0.00</span>
                 </div>
                 <button class="checkout-btn" onclick="checkoutCart()">Proceed to Checkout</button>
-                <button class="clear-cart-btn" onclick="dataManager.clearCart(); loadCartItems(); updateOrderPageSection();">Clear Cart</button>
+                <button class="clear-cart-btn" onclick="dataManager.clearCart(); loadCartItems();">Clear Cart</button>
             </div>
         </div>
     </div>
@@ -214,12 +214,12 @@
                             &#x1F4B5; Cash on Delivery
                         </label>
                         <label id="pay-online-label" onclick="document.getElementById('pay-online-label').style.borderColor='#8b7355';document.getElementById('pay-online-label').style.background='#fff8f0';document.getElementById('pay-cod-label').style.borderColor='#e8d5b7';document.getElementById('pay-cod-label').style.background='#fff'" style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:2px solid #e8d5b7;border-radius:12px;cursor:pointer;background:#fff;font-size:.84rem;font-weight:600;color:#5a3e28">
-                            <input type="radio" name="checkout-payment" value="Online Payment (QR Code)" onchange="toggleInlineQR()">
-                            &#x1F4F2; Online Payment
+                            <input type="radio" name="checkout-payment" value="Online Payment (UPI)" onchange="toggleInlineQR()">
+                            &#x1F4F2; Pay Online (UPI)
                         </label>
                     </div>
 
-                    <!-- Inline QR Section — appears when Online Payment is selected -->
+                    <!-- UPI Section — shown when Online Payment is selected -->
                     <div id="inline-qr-section" style="display:none;margin-top:12px;background:#faf7f3;border-radius:14px;padding:16px 14px;border:1.5px solid #e8d5b7">
                         <!-- Populated by toggleInlineQR() in backend.js -->
                     </div>
@@ -236,5 +236,4 @@
 
     <script src="backend.js"></script>
 </body>
-
 </html>
