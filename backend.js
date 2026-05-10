@@ -147,73 +147,81 @@ function checkoutCart() {
     const cart = dataManager.getCart(); if (!cart.length) { alert('Your cart is empty!'); return; }
     closeCart();
     const modal = document.getElementById('order-summary-modal'); if (!modal) return;
-    modal.style.display = 'flex';
-    const itemsList = document.getElementById('order-summary-items');
-    if (itemsList) itemsList.innerHTML = cart.map(item => { const disc = parseInt(item.discount) || 0; const up = disc > 0 ? Math.round(item.price - item.price * disc / 100) : item.price; return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0e8dc;font-size:.88rem"><span>${escHtml(item.name)} x${item.quantity}</span><span>&#8377;${up * item.quantity}</span></div>`; }).join('');
-    const total = document.getElementById('order-summary-total'); if (total) total.innerHTML = '&#8377;' + dataManager.getCartTotal();
 
-    // Inject inline QR section if not already in the HTML
-    if (!document.getElementById('inline-qr-section')) {
-        const qrDiv = document.createElement('div');
-        qrDiv.id = 'inline-qr-section';
-        qrDiv.style.cssText = 'display:none;margin-top:12px;background:#faf7f3;border-radius:14px;padding:16px 14px;border:1.5px solid #e8d5b7';
-        const payOpts = modal.querySelector('.checkout-payment-options');
-        const form = modal.querySelector('.checkout-form');
-        const anchor = payOpts || form;
-        if (anchor) anchor.insertAdjacentElement('afterend', qrDiv);
+    // Populate items list
+    const itemsList = document.getElementById('order-summary-items');
+    if (itemsList) {
+        itemsList.innerHTML = cart.map(function(item) {
+            var disc = parseInt(item.discount) || 0;
+            var up = disc > 0 ? Math.round(item.price - item.price * disc / 100) : item.price;
+            return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0e8dc;font-size:.88rem"><span>' + escHtml(item.name) + ' x' + item.quantity + '</span><span style="font-weight:600">&#8377;' + (up * item.quantity) + '</span></div>';
+        }).join('');
     }
 
-    // Wire up radio buttons with onchange handler (works even on old index.html)
-    modal.querySelectorAll('input[name="checkout-payment"]').forEach(r => { r.onchange = toggleInlineQR; });
+    // Update total
+    var totalEl = document.getElementById('order-summary-total');
+    if (totalEl) totalEl.innerHTML = '&#8377;' + dataManager.getCartTotal();
+
+    // Reset payment selection to COD
+    var codRadio = document.querySelector('input[name="checkout-payment"][value="Cash on Delivery"]');
+    if (codRadio) { codRadio.checked = true; }
+
+    // Hide and clear QR section
+    var qrSec = document.getElementById('inline-qr-section');
+    if (qrSec) { qrSec.style.display = 'none'; qrSec.innerHTML = ''; }
+
+    // Reset label highlights
+    var codLbl = document.getElementById('pay-cod-label') || document.getElementById('cm-cod-lbl');
+    var upiLbl = document.getElementById('pay-online-label') || document.getElementById('cm-upi-lbl');
+    if (codLbl) { codLbl.style.borderColor = '#8b7355'; codLbl.style.background = '#fff8f0'; }
+    if (upiLbl) { upiLbl.style.borderColor = '#e8d5b7'; upiLbl.style.background = '#fff'; }
+
     _paymentScreenshotUrl = null;
+    modal.style.display = 'flex';
 }
 function closeOrderSummary() {
-    const m = document.getElementById('order-summary-modal'); if (m) m.style.display = 'none';
-    // Reset QR section for next open
-    const s = document.getElementById('inline-qr-section'); if (s) { s.style.display = 'none'; s.innerHTML = ''; }
+    var m = document.getElementById('order-summary-modal');
+    if (m) m.style.display = 'none';
     _paymentScreenshotUrl = null;
 }
 
-// ── TOGGLE INLINE QR — called when radio button changes ──
+// ── TOGGLE INLINE QR — fires when radio changes ──
 function toggleInlineQR() {
-    const payEl = document.querySelector('input[name="checkout-payment"]:checked');
-    const section = document.getElementById('inline-qr-section');
+    var payEl = document.querySelector('input[name="checkout-payment"]:checked');
+    var section = document.getElementById('inline-qr-section');
+    // Support both old and new label IDs
+    var codLbl = document.getElementById('pay-cod-label') || document.getElementById('cm-cod-lbl');
+    var upiLbl = document.getElementById('pay-online-label') || document.getElementById('cm-upi-lbl');
     if (!section) return;
-
-    if (payEl && /online|upi|qr|paytm/i.test(payEl.value)) {
-        const s = dataManager.getSettings() || {};
-        const qrImg = s.paytmQrImage || 'Your-qr-image.png';
-        const total = dataManager.getCartTotal();
-        _paymentScreenshotUrl = null;
-        section.innerHTML = `
-            <div style="text-align:center;padding:4px 0 10px">
-                <p style="font-size:.75rem;color:#8b7355;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px">Scan & Pay with any UPI App</p>
-                <img src="${escHtml(qrImg)}" alt="Payment QR Code"
-                    style="width:160px;height:160px;object-fit:contain;border-radius:12px;border:3px solid #e8d5b7;box-shadow:0 4px 16px rgba(0,0,0,.1)"
-                    onerror="this.src='https://placehold.co/160x160?text=QR+Not+Found'">
-                <div style="margin:10px auto 8px;background:#f0fdf4;border-radius:10px;padding:8px 16px;display:inline-block;min-width:140px;border:1.5px solid #bbf7d0">
-                    <p style="font-size:.7rem;color:#166534;font-weight:700;text-transform:uppercase;margin:0 0 2px">Amount to Pay</p>
-                    <p style="font-size:1.5rem;font-weight:900;color:#15803d;margin:0">&#8377;${total}</p>
-                </div>
-                <p style="font-size:.73rem;color:#9b8a72;margin:2px 0 12px;line-height:1.5">Open any UPI app &rarr; Scan QR &rarr; Pay &#8377;${total}<br>Then take a screenshot and upload it below</p>
-            </div>
-            <input type="file" id="inline-ss-input" accept="image/*" style="display:none" onchange="handleInlineScreenshot(this)">
-            <div id="inline-upload-area" onclick="document.getElementById('inline-ss-input').click()"
-                style="border:2px dashed #8b7355;border-radius:12px;padding:14px 12px;text-align:center;cursor:pointer;background:#fff;transition:all .2s">
-                <div style="font-size:1.5rem;margin-bottom:3px">&#128247;</div>
-                <p style="font-size:.84rem;font-weight:700;color:#5a3e28;margin:0 0 2px">Upload Payment Screenshot</p>
-                <p style="font-size:.73rem;color:#9b8a72;margin:0">Tap here to choose from gallery</p>
-                <img id="inline-ss-preview" src="" alt="preview"
-                    style="display:none;max-width:100%;max-height:110px;object-fit:contain;border-radius:8px;margin-top:8px;border:1.5px solid #e8d5b7">
-                <p id="inline-ss-msg" style="font-size:.8rem;margin:6px 0 0;font-weight:600;color:#92400e"></p>
-            </div>`;
-        section.style.display = 'block';
-        section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    } else {
-        section.style.display = 'none';
-        section.innerHTML = '';
-        _paymentScreenshotUrl = null;
-    }
+    var isOnline = payEl && /online|upi|qr|paytm/i.test(payEl.value);
+    if (codLbl) { codLbl.style.borderColor = isOnline ? '#e8d5b7' : '#8b7355'; codLbl.style.background = isOnline ? '#fff' : '#fff8f0'; }
+    if (upiLbl) { upiLbl.style.borderColor = isOnline ? '#8b7355' : '#e8d5b7'; upiLbl.style.background = isOnline ? '#fff8f0' : '#fff'; }
+    if (!isOnline) { section.style.display = 'none'; section.innerHTML = ''; _paymentScreenshotUrl = null; return; }
+    const s = dataManager.getSettings() || {};
+    const qrImg = s.paytmQrImage || 'Your-qr-image.png';
+    const total = dataManager.getCartTotal();
+    _paymentScreenshotUrl = null;
+    section.innerHTML = `
+        <p style="font-size:.72rem;color:#8b7355;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px">Scan &amp; Pay with any UPI App</p>
+        <img src="${escHtml(qrImg)}" alt="Payment QR"
+            style="width:165px;height:165px;object-fit:contain;border-radius:12px;border:3px solid #e8d5b7;box-shadow:0 4px 16px rgba(0,0,0,.1);display:block;margin:0 auto 10px"
+            onerror="this.src='https://placehold.co/165x165/f5ede0/8b7355?text=QR+Code'">
+        <div style="background:#f0fdf4;border-radius:10px;padding:8px 14px;display:inline-block;border:1.5px solid #bbf7d0;margin-bottom:8px">
+            <p style="font-size:.68rem;color:#166534;font-weight:700;text-transform:uppercase;margin:0 0 1px">Amount to Pay</p>
+            <p style="font-size:1.45rem;font-weight:900;color:#15803d;margin:0">&#8377;${total}</p>
+        </div>
+        <p style="font-size:.72rem;color:#9b8a72;margin:0 0 12px;line-height:1.5">Open any UPI app &rarr; Scan &rarr; Pay &#8377;${total}<br>Screenshot the success screen, then upload below</p>
+        <input type="file" id="inline-ss-input" accept="image/*" style="display:none" onchange="handleInlineScreenshot(this)">
+        <div id="inline-upload-area" onclick="document.getElementById('inline-ss-input').click()"
+            style="border:2px dashed #8b7355;border-radius:12px;padding:14px;cursor:pointer;background:#fff;transition:all .2s">
+            <div style="font-size:1.4rem;margin-bottom:3px">&#128247;</div>
+            <p style="font-size:.82rem;font-weight:700;color:#5a3e28;margin:0 0 2px">Tap to upload payment screenshot</p>
+            <p style="font-size:.72rem;color:#9b8a72;margin:0">Choose from gallery</p>
+            <img id="inline-ss-preview" src="" alt="preview" style="display:none;max-width:100%;max-height:100px;object-fit:contain;border-radius:8px;margin-top:8px">
+            <p id="inline-ss-msg" style="font-size:.78rem;margin:6px 0 0;font-weight:600"></p>
+        </div>`;
+    section.style.display = 'block';
+    setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
 }
 
 async function handleInlineScreenshot(input) {
@@ -222,13 +230,10 @@ async function handleInlineScreenshot(input) {
     const preview = document.getElementById('inline-ss-preview');
     const msg = document.getElementById('inline-ss-msg');
     const area = document.getElementById('inline-upload-area');
-    const fr = new FileReader();
-    fr.onload = e => { if (preview) { preview.src = e.target.result; preview.style.display = 'block'; } };
-    fr.readAsDataURL(file);
-    if (msg) { msg.style.color = '#92400e'; msg.textContent = '\u23F3 Uploading screenshot...'; }
+    const fr = new FileReader(); fr.onload = e => { if (preview) { preview.src = e.target.result; preview.style.display = 'block'; } }; fr.readAsDataURL(file);
+    if (msg) { msg.style.color = '#92400e'; msg.textContent = '\u23F3 Uploading...'; }
     try {
-        const result = await dataManager.uploadPaymentScreenshot(file);
-        _paymentScreenshotUrl = result.url;
+        const result = await dataManager.uploadPaymentScreenshot(file); _paymentScreenshotUrl = result.url;
         if (msg) { msg.style.color = '#16a34a'; msg.textContent = '\u2705 Uploaded! Now click Confirm Order.'; }
         if (area) { area.style.borderColor = '#22c55e'; area.style.borderStyle = 'solid'; area.style.background = '#f0fdf4'; }
     } catch (err) {
@@ -237,56 +242,15 @@ async function handleInlineScreenshot(input) {
     }
 }
 
-// ── CONFIRM ORDER — your button calls this ──
+// ── CONFIRM ORDER ──
 async function confirmOrderSummary() {
     const payEl = document.querySelector('input[name="checkout-payment"]:checked');
     const method = payEl ? payEl.value : 'Cash on Delivery';
     if (/online|upi|qr|paytm/i.test(method)) {
-        if (!_paymentScreenshotUrl) {
-            alert('Please upload your payment screenshot first.\n\nTap the upload area below the QR code.');
-            return;
-        }
+        if (!_paymentScreenshotUrl) { alert('Please upload your payment screenshot first.\n\nScroll down and tap the upload area below the QR code.'); return; }
         await placeOrder(_paymentScreenshotUrl);
-    } else {
-        await placeOrder(null);
-    }
+    } else { await placeOrder(null); }
 }
-
-// ── QR PAYMENT + MANDATORY SCREENSHOT ──
-let _paymentScreenshotUrl = null;
-
-function _injectPaymentStyles() {
-    if (document.getElementById('cm-pay-styles')) return;
-    const s = document.createElement('style'); s.id = 'cm-pay-styles';
-    s.textContent = `.cm-mb{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9500;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}.cm-m{background:#fff;border-radius:24px;max-width:420px;width:100%;box-shadow:0 24px 60px rgba(45,33,23,.28);overflow:hidden;animation:cmI .35s cubic-bezier(.34,1.56,.64,1) both;max-height:92vh;overflow-y:auto}@keyframes cmI{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:scale(1)}}.cm-mh{background:linear-gradient(135deg,#00457c,#0068c1);padding:22px 20px;text-align:center;color:#fff}.cm-mh h3{margin:0 0 4px;font-size:1.2rem;font-weight:800}.cm-mh p{margin:0;opacity:.85;font-size:.83rem}.cm-mb2{padding:20px}.cm-ab{background:#f0fdf4;border:2.5px solid #22c55e;border-radius:16px;padding:16px;text-align:center;margin-bottom:16px}.cm-al{font-size:.78rem;color:#166534;font-weight:700;text-transform:uppercase}.cm-av{font-size:2.4rem;font-weight:900;color:#15803d;line-height:1.2}.cm-an{font-size:.72rem;color:#166534;margin-top:2px}.cm-qw{text-align:center;margin-bottom:16px}.cm-qw img{max-width:210px;width:100%;border-radius:14px;border:3px solid #e8d5b7;box-shadow:0 6px 20px rgba(0,0,0,.12)}.cm-st{background:#fef9f0;border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:.82rem;color:#5a4a3a;line-height:1.9}.cm-st strong{color:#2f241b}.cm-ua{border:2.5px dashed #8b7355;border-radius:16px;padding:22px 16px;text-align:center;cursor:pointer;transition:all .2s;background:#faf7f3;margin-bottom:14px}.cm-ua:hover,.cm-ua.dov{background:#f0e8dc;border-color:#6b5a3e}.cm-ua.done{border-color:#22c55e;background:#f0fdf4;border-style:solid}.cm-ui{font-size:2.2rem;margin-bottom:6px}.cm-ut{font-size:.9rem;font-weight:700;color:#5a3e28;margin-bottom:3px}.cm-us{font-size:.74rem;color:#9b8a72}.cm-up{max-width:100%;max-height:140px;object-fit:contain;border-radius:10px;margin-top:10px;display:none;border:2px solid #e8d5b7}.cm-up.show{display:block;margin:10px auto 0}.cm-um{margin-top:8px;font-size:.79rem;font-weight:700}.cm-um.l{color:#d97706}.cm-um.ok{color:#16a34a}.cm-um.err{color:#dc2626}.cm-pb{width:100%;padding:17px;background:#22c55e;color:#fff;border:none;border-radius:14px;font-size:1rem;font-weight:800;cursor:pointer;transition:all .2s}.cm-pb:disabled{background:#e5e7eb;color:#9ca3af;cursor:not-allowed}.cm-pb:not(:disabled):hover{background:#16a34a;transform:translateY(-1px)}.cm-bl{display:block;text-align:center;margin-top:12px;color:#8b7355;font-size:.82rem;cursor:pointer;text-decoration:underline}`;
-    document.head.appendChild(s);
-}
-
-function showQRPaymentModal() {
-    const s = dataManager.getSettings() || {}; const qrImg = s.paytmQrImage || 'Your-qr-image.png'; const total = dataManager.getCartTotal(); _paymentScreenshotUrl = null;
-    document.getElementById('cm-qr-modal')?.remove();
-    const modal = document.createElement('div'); modal.id = 'cm-qr-modal'; modal.className = 'cm-mb';
-    modal.innerHTML = `<div class="cm-m"><div class="cm-mh"><div style="font-size:2rem;margin-bottom:6px">&#128664;</div><h3>Pay via Paytm</h3><p>Scan &rarr; Pay &rarr; Upload screenshot &rarr; Place order</p></div><div class="cm-mb2"><div class="cm-ab"><div class="cm-al">Amount to Pay</div><div class="cm-av">&#8377;${total}</div><div class="cm-an">Pay this exact amount on Paytm</div></div><div class="cm-qw"><img src="${escHtml(qrImg)}" alt="Paytm QR" onerror="this.src='https://placehold.co/200x200?text=QR+Not+Found'"><p style="font-size:.72rem;color:#9b8a72;margin-top:6px">Can't scan? Open Paytm &rarr; Search by name</p></div><div class="cm-st">1&#65039;&#8419; Open <strong>Paytm</strong> &rarr; tap <strong>Scan &amp; Pay</strong><br>2&#65039;&#8419; Scan QR above &rarr; pay <strong>&#8377;${total}</strong><br>3&#65039;&#8419; <strong>Screenshot</strong> the success screen<br>4&#65039;&#8419; Upload it below &darr;</div><input type="file" id="cm-ss-input" accept="image/*" style="display:none" onchange="handleScreenshotFile(this)"><div class="cm-ua" id="cm-upload-area" onclick="document.getElementById('cm-ss-input').click()"><div class="cm-ui">&#128247;</div><div class="cm-ut">Upload Payment Screenshot</div><div class="cm-us">Tap here to choose from your gallery</div><img id="cm-ss-preview" class="cm-up" src="" alt="preview"><div class="cm-um" id="cm-ss-msg"></div></div><button class="cm-pb" id="cm-place-btn" disabled onclick="placeOrderAfterPayment()">&#128274;&nbsp; Upload Screenshot First</button><span class="cm-bl" onclick="closeQRModal()">&#8592; Back to order form</span></div></div>`;
-    const area = modal.querySelector('#cm-upload-area');
-    area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('dov'); });
-    area.addEventListener('dragleave', () => area.classList.remove('dov'));
-    area.addEventListener('drop', e => { e.preventDefault(); area.classList.remove('dov'); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) processScreenshot(f); });
-    document.body.appendChild(modal); document.body.style.overflow = 'hidden';
-}
-function closeQRModal() { document.getElementById('cm-qr-modal')?.remove(); document.body.style.overflow = ''; _paymentScreenshotUrl = null; }
-async function handleScreenshotFile(input) { if (input.files && input.files[0]) await processScreenshot(input.files[0]); }
-async function processScreenshot(file) {
-    const preview = document.getElementById('cm-ss-preview'), msg = document.getElementById('cm-ss-msg'), area = document.getElementById('cm-upload-area'), btn = document.getElementById('cm-place-btn');
-    new FileReader().onload = e => { if (preview) { preview.src = e.target.result; preview.classList.add('show'); } };
-    const fr = new FileReader(); fr.onload = e => { if (preview) { preview.src = e.target.result; preview.classList.add('show'); } }; fr.readAsDataURL(file);
-    area?.classList.remove('done'); if (msg) { msg.className = 'cm-um l'; msg.textContent = '⏳ Uploading screenshot...'; } if (btn) { btn.disabled = true; btn.innerHTML = '⏳&nbsp; Uploading...'; }
-    try {
-        const result = await dataManager.uploadPaymentScreenshot(file); _paymentScreenshotUrl = result.url;
-        if (msg) { msg.className = 'cm-um ok'; msg.textContent = '✅ Uploaded! Tap below to place your order.'; } area?.classList.add('done'); if (btn) { btn.disabled = false; btn.innerHTML = '&#9989;&nbsp; Place Order Now'; }
-    } catch (err) { _paymentScreenshotUrl = null; if (msg) { msg.className = 'cm-um err'; msg.textContent = '❌ Failed — ' + err.message + '. Try again.'; } if (btn) { btn.disabled = true; btn.innerHTML = '&#128274;&nbsp; Upload Screenshot First'; } }
-}
-async function placeOrderAfterPayment() { if (!_paymentScreenshotUrl) { alert('Please upload your payment screenshot first.'); return; } closeQRModal(); await placeOrder(_paymentScreenshotUrl); }
-
 // ── ORDER ──
 function generateOrderRef() { const n = new Date(); return 'CM-' + String(n.getFullYear()).slice(-2) + String(n.getMonth() + 1).padStart(2, '0') + String(n.getDate()).padStart(2, '0') + '-' + String(Math.floor(Math.random() * 900) + 100); }
 async function placeOrder(paymentScreenshotUrl) {
