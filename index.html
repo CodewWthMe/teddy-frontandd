@@ -259,8 +259,25 @@
                         </label>
                     </div>
 
-                    <!-- UPI section — shown when Online Payment is selected -->
-                    <div id="inline-qr-section" style="margin-top:12px;background:#faf7f3;border-radius:14px;padding:16px 14px;border:1.5px solid #e8d5b7;text-align:center">
+                    <!-- UPI always visible -->
+                    <div id="inline-qr-section" style="margin-top:12px;background:#faf7f3;border-radius:14px;padding:16px 14px;border:1.5px solid #e8d5b7">
+                        <p style="font-size:.72rem;color:#8b7355;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px">&#128247; Pay via UPI</p>
+                        <div style="background:#fff;border:2px solid #e8d5b7;border-radius:14px;padding:14px 16px;margin-bottom:10px;text-align:center">
+                            <p style="font-size:.7rem;color:#9b8a72;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px">Send payment to this UPI ID</p>
+                            <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+                                <span style="font-size:1.2rem;font-weight:900;color:#5a3e28;letter-spacing:.02em;font-family:monospace">7415036637@ptyes</span>
+                                <button type="button" onclick="var b=this;if(navigator.clipboard){navigator.clipboard.writeText('7415036637@ptyes').then(function(){b.textContent='\u2713 Copied!';b.style.background='#16a34a';setTimeout(function(){b.innerHTML='&#128203; Copy';b.style.background='#8b7355'},2000)})}return false" style="padding:6px 14px;font-size:.75rem;font-weight:700;border-radius:999px;background:#8b7355;color:#fff;border:none;cursor:pointer">&#128203; Copy</button>
+                            </div>
+                        </div>
+                        <div style="background:#fff8f0;border-radius:10px;padding:10px 14px;border:1.5px solid #e8d5b7">
+                            <p style="font-size:.78rem;color:#5a3e28;font-weight:700;margin:0 0 4px">&#128073; How to pay:</p>
+                            <ol style="font-size:.76rem;color:#7a6255;line-height:1.7;margin:0;padding-left:16px">
+                                <li>Open GPay, PhonePe, Paytm etc.</li>
+                                <li>Go to <strong>Send Money &#8594; Pay by UPI ID</strong></li>
+                                <li>Enter UPI ID: <strong>7415036637@ptyes</strong></li>
+                                <li>Pay the full amount, then click Confirm Order</li>
+                            </ol>
+                        </div>
                     </div>
                 </div>
             </div>
