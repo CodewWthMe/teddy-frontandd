@@ -57,7 +57,11 @@ class DataManager {
         if (!grid) return;
         const fc = document.getElementById('product-types-filter');
         if (fc) { const types = [...new Set(this.products.map(p => p.type).filter(Boolean))]; fc.innerHTML = `<button class="filter-btn active" onclick="filterProductsByType('all',event)">All</button>` + types.map(t => `<button class="filter-btn" onclick="filterProductsByType('${t}',event)">${t}</button>`).join(''); activeFilter = 'all'; }
-        activeSearch = ''; _renderOffset = 0; renderProducts(this.products, grid);
+        activeSearch = ''; _renderOffset = 0;
+        // On homepage show only featured products; on shop page show all
+        const isFeaturedPage = !!document.getElementById('featured-products-grid') && !document.getElementById('all-products-grid');
+        const toShow = isFeaturedPage ? this.products.filter(p => p.featured) : this.products;
+        renderProducts(toShow, grid);
     }
 }
 
@@ -312,7 +316,7 @@ function initializeProductForm() {
     const form = document.getElementById('product-form'); if (!form) return;
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
-        const name = (document.getElementById('product-name')?.value || '').trim(), desc = (document.getElementById('product-description')?.value || '').trim(), price = parseFloat(document.getElementById('product-price')?.value), disc = parseInt(document.getElementById('product-discount')?.value) || 0, imgUrl = (document.getElementById('product-image')?.value || '').trim(), type = document.getElementById('product-type')?.value || '', featured = document.getElementById('product-featured')?.checked ?? true, stock = parseInt(document.getElementById('product-stock')?.value) || 99;
+        const name = (document.getElementById('product-name')?.value || '').trim(), desc = (document.getElementById('product-description')?.value || '').trim(), price = parseFloat(document.getElementById('product-price')?.value), disc = parseInt(document.getElementById('product-discount')?.value) || 0, imgUrl = (document.getElementById('product-image')?.value || '').trim(), type = document.getElementById('product-type')?.value || '', featured = document.getElementById('product-featured')?.checked ?? false, stock = parseInt(document.getElementById('product-stock')?.value) || 99;
         if (!name) { alert('Product name required'); return; } if (!price || price <= 0) { alert('Valid price required'); return; }
         const files = _pendingFiles.filter(Boolean); if (!files.length && !imgUrl) { alert('Add at least one photo — use Camera or Gallery'); return; }
         const btn = form.querySelector('[type="submit"]'), orig = btn?.textContent || 'Save Product';
@@ -381,7 +385,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (grid) showProductSkeletons(grid, 8);
     await dataManager.ready;
     updateCartCount(); loadCartItems();
-    if (grid) { if (dataManager.getProducts().length > 0) dataManager.updateProductDisplay(); else grid.innerHTML = '<p class="no-products">No products yet. Check back soon!</p>'; }
+    if (grid) {
+        const allProds = dataManager.getProducts();
+        const isFeaturedPage = !!document.getElementById('featured-products-grid') && !document.getElementById('all-products-grid');
+        const toShow = isFeaturedPage ? allProds.filter(p => p.featured) : allProds;
+        if (toShow.length > 0) renderProducts(toShow, grid);
+        else if (allProds.length > 0) grid.innerHTML = '<p class="no-products">No featured products yet.</p>';
+        else grid.innerHTML = '<p class="no-products">No products yet. Check back soon!</p>';
+    }
     initializeProductForm();
     if (dataManager.isAdminLoggedIn() && document.getElementById('admin-login') && document.getElementById('admin-panel')) showAdminPanel();
 
